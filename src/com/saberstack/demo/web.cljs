@@ -8,10 +8,35 @@
             [datascript.core :as d]
             [ss.react-native.core :as r]))
 
+(defn init-conn []
+  (let [conn      (d/create-conn {})
+        query     (q/create-query
+                    (zsxf.c/static-compile
+                      '[:find ?person-name
+                        :where
+                        [?e :person/name ?person-name]
+                        [?e :person/name ?person-name]]))
+        _         (ds/init-query-with-conn query conn)
+        _         (d/transact! conn [{:person/name "Alice"}])
+        _         (d/transact! conn [{:person/else "Bob"}])
+        result-ds (d/q
+                    '[:find ?person-name
+                      :where
+                      [?e :person/name ?person-name]
+                      [?e :person/name ?person-name]]
+                    @conn)]
+
+    {:ivm (q/get-result query)
+     :ds result-ds}
+
+    ))
+
 (defn build-root-view []
   (let []
     (r/view {}
-      (r/text {} "Render Now!"))))
+      (r/text {}
+        (str
+          (init-conn))))))
 
 (defn init-expo []
   (expo/register-root-component
@@ -36,27 +61,3 @@
       [?te :side "buy"]
       [?te :product_id ?currency]])
   )
-
-(defn init-conn []
-  (let [conn  (d/create-conn {})
-        query (q/create-query
-                (zsxf.c/static-compile
-                  '[:find ?person-name
-                    :where
-                    [?e :person/name ?person-name]
-                    [?e :person/name ?person-name]]))
-        _     (ds/init-query-with-conn query conn)]
-
-    (d/transact! conn [{:person/name "Alice"}])
-    (d/transact! conn [{:person/else "Bob"}])
-
-    (d/q
-      '[:find ?person-name
-        :where
-        [?e :person/name ?person-name]
-        [?e :person/name ?person-name]]
-      @conn)
-
-    (q/get-result query)
-
-    ))
