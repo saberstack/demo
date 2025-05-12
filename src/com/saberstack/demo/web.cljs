@@ -1,7 +1,11 @@
 (ns com.saberstack.demo.web
-  (:require [react]
+  (:require [org.zsxf.query :as q]
+            [react]
             [react-native :as rn]
             [ss.expo.core :as expo]
+            [org.zsxf.datalog.compiler :as zsxf.c]
+            [org.zsxf.datascript :as ds]
+            [datascript.core :as d]
             [ss.react-native.core :as r]))
 
 (defn build-root-view []
@@ -24,3 +28,35 @@
 
 (when (expo/prod?)
   (init-expo))
+
+(defn init-compile []
+  (zsxf.c/static-compile
+    '[:find ?currency
+      :where
+      [?te :side "buy"]
+      [?te :product_id ?currency]])
+  )
+
+(defn init-conn []
+  (let [conn  (d/create-conn {})
+        query (q/create-query
+                (zsxf.c/static-compile
+                  '[:find ?person-name
+                    :where
+                    [?e :person/name ?person-name]
+                    [?e :person/name ?person-name]]))
+        _     (ds/init-query-with-conn query conn)]
+
+    (d/transact! conn [{:person/name "Alice"}])
+    (d/transact! conn [{:person/else "Bob"}])
+
+    (d/q
+      '[:find ?person-name
+        :where
+        [?e :person/name ?person-name]
+        [?e :person/name ?person-name]]
+      @conn)
+
+    (q/get-result query)
+
+    ))
