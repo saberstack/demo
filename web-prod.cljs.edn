@@ -1,0 +1,4 @@
+^{:react-native :expo}
+{:main       com.saberstack.demo.web
+ :output-dir "target_prod"
+ :output-to  "target_prod/index.js"}

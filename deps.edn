@@ -1,0 +1,4 @@
+{:paths ["src" "target"]
+ :deps  {org.clojure/clojurescript     {:mvn/version "1.12.38"}
+         com.bhauman/figwheel-main     {:mvn/version "0.2.20"}
+         alexandria-clj/alexandria-clj {:local/root "/Users/raspasov/projects/saberstack/alexandria"}}}
