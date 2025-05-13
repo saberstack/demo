@@ -19,9 +19,23 @@
 
 (defn render-state
   [{:btc/keys [buy-query sell-query]}]
-  [[:render-time ]
-   [:btc/buy-query (count (q/get-result buy-query))]
+  [[:btc/buy-query (count (q/get-result buy-query))]
    [:btc/sell-query (count (q/get-result sell-query))]])
+
+(defn render-state-datascript
+  [{:btc/keys [buy-query sell-query]}]
+  (let [conn @@*conn]
+    {:todo :todo}
+    [[:btc/buy-query (count (d/q '[:find ?te
+                                   :where
+                                   [?te :side "buy"]
+                                   [?te :product_id "BTC-USD"]]
+                              conn))]
+     [:btc/sell-query (count (d/q '[:find ?te
+                                    :where
+                                    [?te :side "sell"]
+                                    [?te :product_id "BTC-USD"]]
+                               conn))]]))
 
 (rc/defnrc demo-component [props]
   (timbre/info "render demo...")
@@ -33,16 +47,17 @@
   "Similar to time but as a fn
   Returns a vector of elapsed time and result of calling f"
   [f]
-  (let [t1 (system-time)
+  (let [t1       (system-time)
         f-return (f)
-        t2 (system-time)]
+        t2       (system-time)]
     [(- t2 t1) f-return]))
 
 (rc/defnrc root-component [props]
   (timbre/info "Root RENDER")
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _ (reset! *root-refresh-hook root-refresh-hook)
-        [t ret] (measure-time #(render-state props))]
+        ;[t ret] (measure-time #(render-state props))
+        [t ret] (measure-time #(render-state-datascript props))]
     (demo {:render-time t
            :state       ret})))
 (def root (rc/e root-component))
