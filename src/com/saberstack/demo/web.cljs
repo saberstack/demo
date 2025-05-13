@@ -6,58 +6,89 @@
             [org.zsxf.datalog.compiler :as zsxf.c]
             [org.zsxf.datascript :as ds]
             [datascript.core :as d]
-            [ss.react-native.core :as r]))
+            [com.saberstack.demo.ticker-feed :as ticker-feed]
+            [ss.react-native.core :as r]
+            [ss.react.root :as react-root]
+            [ss.react.core :as rc]
+            [ss.react.state :as state]
+            [taoensso.timbre :as timbre]))
 
-(defn init-conn []
-  (let [conn      (d/create-conn {})
-        query     (q/create-query
-                    (zsxf.c/static-compile
-                      '[:find ?person-name
-                        :where
-                        [?e :person/name ?person-name]
-                        [?e :person/name ?person-name]]))
-        _         (ds/init-query-with-conn query conn)
-        _         (d/transact! conn [{:person/name "Alice"}])
-        _         (d/transact! conn [{:person/else "Bob"}])
-        result-ds (d/q
-                    '[:find ?person-name
+(defonce *root-refresh-hook (atom nil))
+
+(defonce *conn (atom nil))
+
+(defn render-state
+  [{:btc/keys [buy-query sell-query]}]
+  [[:btc/buy-query (count (q/get-result buy-query))]
+   [:btc/sell-query (count (q/get-result sell-query))]])
+
+(rc/defnrc demo-component [props]
+  (timbre/info "render demo...")
+  (r/view {:style {:backgroundColor "white" :flex 1}}
+    (r/text {} (str props))))
+(def demo (rc/e demo-component))
+
+(rc/defnrc root-component [props]
+  ;(timbre/info "Root RENDER:" props)
+  (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
+        _ (reset! *root-refresh-hook root-refresh-hook)]
+    (demo {:state (render-state props)})))
+(def root (rc/e root-component))
+
+(defn setup-websocket! [conn]
+  (ticker-feed/new-web-socket!
+    {:callback-f
+     (fn [^js/Object ws-message]
+       (let [json-string (.-data ws-message)
+             data        (js->clj (js/JSON.parse json-string) :keywordize-keys true)]
+         (d/transact! conn [data])))}))
+
+(defn conn-render-listener []
+  (when-let [refresh-root-hook @*root-refresh-hook]
+    (refresh-root-hook (random-uuid))))
+
+(defn pre-render-setup! []
+  (timbre/info "pre-render...")
+  (let [conn    (d/create-conn {})
+        _       (d/listen! conn conn-render-listener)
+        _       (reset! *conn conn)
+        query-1 (q/create-query
+                  (zsxf.c/static-compile
+                    '[:find ?te
                       :where
-                      [?e :person/name ?person-name]
-                      [?e :person/name ?person-name]]
-                    @conn)]
+                      [?te :side "buy"]
+                      [?te :product_id "BTC-USD"]]))
+        _       (ds/init-query-with-conn query-1 conn)
+        query-2 (q/create-query
+                  (zsxf.c/static-compile
+                    '[:find ?te
+                      :where
+                      [?te :side "sell"]
+                      [?te :product_id "BTC-USD"]]))
+        _       (ds/init-query-with-conn query-2 conn)]
+    (setup-websocket! conn)
+    (root {:btc/buy-query  query-1
+           :btc/sell-query query-2})))
 
-    {:ivm (q/get-result query)
-     :ds result-ds}
-
-    ))
-
-(defn build-root-view []
-  (let []
-    (r/view {}
-      (r/text {}
-        (str
-          (init-conn))))))
-
-(defn init-expo []
+(defn init []
   (expo/register-root-component
-    (fn [] (build-root-view))))
+    (fn [] (pre-render-setup!))))
 
 ;; the function figwheel-rn-root MUST be provided. It will be called by
 ;; by the react-native-figwheel-bridge to render your application.
 (defn figwheel-rn-root []
-  (init-expo))
+  (pre-render-setup!))
 
 (defn -main [& args]
-  (init-expo)
+  (init)
   (println "Hello RN web from CLJS"))
 
 (when (expo/prod?)
-  (init-expo))
+  (init))
 
-(defn init-compile []
-  (zsxf.c/static-compile
-    '[:find ?currency
-      :where
-      [?te :side "buy"]
-      [?te :product_id ?currency]])
+(comment
+
+  (ticker-feed/close! @ticker-feed/*ws)
+
+  (d/transact! @*conn [{:side "buy" :product_id "USD"}])
   )
