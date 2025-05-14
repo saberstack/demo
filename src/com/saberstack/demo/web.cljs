@@ -19,28 +19,84 @@
 
 (defn render-state
   [{:btc/keys [buy-query sell-query]}]
-  [[:btc/buy-query (count (q/get-result buy-query))]
-   [:btc/sell-query (count (q/get-result sell-query))]])
+  (into {}
+    [[:btc/buy-query (count (q/get-result buy-query))]
+     [:btc/sell-query (count (q/get-result sell-query))]]))
 
 (defn render-state-datascript
   [{:btc/keys [buy-query sell-query]}]
   (let [conn @@*conn]
-    {:todo :todo}
-    [[:btc/buy-query (count (d/q '[:find ?te
-                                   :where
-                                   [?te :side "buy"]
-                                   [?te :product_id "BTC-USD"]]
-                              conn))]
-     [:btc/sell-query (count (d/q '[:find ?te
-                                    :where
-                                    [?te :side "sell"]
-                                    [?te :product_id "BTC-USD"]]
-                               conn))]]))
+    (into {}
+      [[:btc/buy-query (count (d/q '[:find ?te
+                                     :where
+                                     [?te :side "buy"]
+                                     [?te :product_id "BTC-USD"]]
+                                conn))]
+       [:btc/sell-query (count (d/q '[:find ?te
+                                      :where
+                                      [?te :side "sell"]
+                                      [?te :product_id "BTC-USD"]]
+                                 conn))]])))
 
-(rc/defnrc demo-component [props]
-  (timbre/info "render demo...")
-  (r/view {:style {:backgroundColor "white" :flex 1}}
-    (r/text {} (str props))))
+(rc/defnrc demo-component [{{:btc/keys [buy-query sell-query]} :state}]
+  (timbre/info "render demo..." buy-query)
+  (r/view {:style {:flex 1}}
+
+    ;header
+    (r/view {:style {:flex 0.2}}
+      (r/view {:style {:flex 1 :flexDirection "row"}}
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} ""))
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} "sell count"))
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} "buy count"))))
+    (r/view {:style {:flex 1 :flexDirection "row" :backgroundColor "yellow"}}
+      (r/view {:style {:flex 1}}
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} "BTC-USD"))
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} "ETH-USD"))
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} "LTC-USD")))
+      (r/view {:style {:flex 1}}
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} sell-query))
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} "_"))
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} "_")))
+      (r/view {:style {:flex 1}}
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} buy-query))
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} "_"))
+        (r/view {:style {:flex           1
+                         :alignItems     "center"
+                         :justifyContent "center"}}
+          (r/text {:style {:fontSize 48}} "_"))))))
 (def demo (rc/e demo-component))
 
 (defn measure-time
@@ -53,21 +109,24 @@
     [(- t2 t1) f-return]))
 
 (rc/defnrc root-component [props]
-  (timbre/info "Root RENDER")
+  ;(timbre/info "Root RENDER")
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _ (reset! *root-refresh-hook root-refresh-hook)
         ;[t ret] (measure-time #(render-state props))
-        [t ret] (measure-time #(render-state-datascript props))]
-    (demo {:render-time t
+        [t ret] (measure-time #(render-state props))]
+    (demo {:render-time (int t)
            :state       ret})))
+
 (def root (rc/e root-component))
 
 (defn setup-websocket! [conn]
   (ticker-feed/new-web-socket!
     {:callback-f
      (fn [^js/Object ws-message]
+
        (let [json-string (.-data ws-message)
              data        (js->clj (js/JSON.parse json-string) :keywordize-keys true)]
+         ;(timbre/info data)
          (d/transact! conn [data])))}))
 
 (defn conn-render-listener []
