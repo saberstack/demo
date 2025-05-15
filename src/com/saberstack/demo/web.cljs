@@ -43,59 +43,41 @@
   [{:btc/keys [buy-query sell-query]}]
   (let [conn @@*conn]
     {:btc/buy-query
-     (util/time-f
-       (count (d/q '[:find ?te
-                     :where
-                     [?te :side "buy"]
-                     [?te :product_id "BTC-USD"]]
-                conn))
-       (fn [tx-time]
-         (add-data-to-chart tx-time)))
+     (count (d/q '[:find ?te
+                   :where
+                   [?te :side "buy"]
+                   [?te :product_id "BTC-USD"]]
+              conn))
      :btc/sell-query
-     (util/time-f
-       (count (d/q '[:find ?te
-                     :where
-                     [?te :side "sell"]
-                     [?te :product_id "BTC-USD"]]
-                conn))
-       (fn [tx-time]
-         (add-data-to-chart tx-time)))
+     (count (d/q '[:find ?te
+                   :where
+                   [?te :side "sell"]
+                   [?te :product_id "BTC-USD"]]
+              conn))
      :ltc/buy-query
-     (util/time-f
-       (count (d/q '[:find ?te
-                     :where
-                     [?te :side "buy"]
-                     [?te :product_id "LTC-USD"]]
-                conn))
-       (fn [tx-time]
-         (add-data-to-chart tx-time)))
+     (count (d/q '[:find ?te
+                   :where
+                   [?te :side "buy"]
+                   [?te :product_id "LTC-USD"]]
+              conn))
      :ltc/sell-query
-     (util/time-f
-       (count (d/q '[:find ?te
-                     :where
-                     [?te :side "sell"]
-                     [?te :product_id "LTC-USD"]]
-                conn))
-       (fn [tx-time]
-         (add-data-to-chart tx-time)))
+     (count (d/q '[:find ?te
+                   :where
+                   [?te :side "sell"]
+                   [?te :product_id "LTC-USD"]]
+              conn))
      :eth/buy-query
-     (util/time-f
-       (count (d/q '[:find ?te
-                     :where
-                     [?te :side "buy"]
-                     [?te :product_id "ETH-USD"]]
-                conn))
-       (fn [tx-time]
-         (add-data-to-chart tx-time)))
+     (count (d/q '[:find ?te
+                   :where
+                   [?te :side "buy"]
+                   [?te :product_id "ETH-USD"]]
+              conn))
      :eth/sell-query
-     (util/time-f
-       (count (d/q '[:find ?te
-                     :where
-                     [?te :side "sell"]
-                     [?te :product_id "ETH-USD"]]
-                conn))
-       (fn [tx-time]
-         (add-data-to-chart tx-time)))}))
+     (count (d/q '[:find ?te
+                   :where
+                   [?te :side "sell"]
+                   [?te :product_id "ETH-USD"]]
+              conn))}))
 
 (def font-size 28)
 
@@ -181,7 +163,10 @@
   ;(timbre/info "Root RENDER" props)
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _         (reset! *root-refresh-hook root-refresh-hook)
-        ret       (render-state-datascript props)
+        ret       (util/time-f
+                    (render-state-datascript props)
+                    (fn [tx-time]
+                      (add-data-to-chart tx-time)))
         line-data @*line-data]
     (r/view
       {:style {:flex 1}}
