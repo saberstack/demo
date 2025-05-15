@@ -18,10 +18,8 @@
 (defonce *conn (atom nil))
 
 (defn render-state
-  [{:btc/keys [buy-query sell-query]}]
-  (into {}
-    [[:btc/buy-query (count (q/get-result buy-query))]
-     [:btc/sell-query (count (q/get-result sell-query))]]))
+  [{:btc/keys [buy-query sell-query] :as m}]
+  (update-vals m (fn [query] (count (q/get-result query)))))
 
 (defn render-state-datascript
   [{:btc/keys [buy-query sell-query]}]
@@ -38,65 +36,47 @@
                                       [?te :product_id "BTC-USD"]]
                                  conn))]])))
 
-(rc/defnrc demo-component [{{:btc/keys [buy-query sell-query]} :state}]
-  (timbre/info "render demo..." buy-query)
-  (r/view {:style {:flex 1}}
+(def font-size 28)
 
+(rc/defnrc grid-cell-component [props]
+  (r/view {:style {:flex           1
+                   :alignItems     "center"
+                   :justifyContent "center"}}
+    (r/text {:style {:fontSize font-size}}
+      props)))
+(def grid-cell (rc/e grid-cell-component))
+
+(rc/defnrc demo-component [{state :state}]
+  (r/view {:style {:flex 1}}
     ;header
-    (r/view {:style {:flex 0.2}}
+    (r/view {:style {:flex 0.05 :backgroundColor "black"}}
       (r/view {:style {:flex 1 :flexDirection "row"}}
         (r/view {:style {:flex           1
                          :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} ""))
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} "sell count"))
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} "buy count"))))
-    (r/view {:style {:flex 1 :flexDirection "row" :backgroundColor "yellow"}}
+                         :justifyContent "center"
+                         :flexDirection  "row"}}
+          (r/text {:style {:fontSize 15 :color "white"}}
+            "Cryptocurrency live sentiment statistics | ")
+          (r/text {:style {:fontSize 15 :fontWeight "bold" :color "white"} :href "https://github.com/saberstack/zsxf"}
+            "Github"))))
+    (r/view {:style {:flex 0.2}}
+      (r/view {:style {:flex 1 :flexDirection "row"}}
+        (grid-cell "Symbol / Trade book")
+        (grid-cell "Sell count")
+        (grid-cell "Buy count")))
+    (r/view {:style {:flex 1 :flexDirection "row" :backgroundColor "#fddb29"}}
+      (r/view {:style {:flex 1 :backgroundColor "#f6cf00"}}
+        (grid-cell "BTC-USD")
+        (grid-cell "ETH-USD")
+        (grid-cell "LTC-USD"))
       (r/view {:style {:flex 1}}
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} "BTC-USD"))
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} "ETH-USD"))
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} "LTC-USD")))
+        (grid-cell (:btc/sell-query state))
+        (grid-cell (:eth/sell-query state))
+        (grid-cell (:ltc/sell-query state)))
       (r/view {:style {:flex 1}}
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} sell-query))
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} "_"))
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} "_")))
-      (r/view {:style {:flex 1}}
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} buy-query))
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} "_"))
-        (r/view {:style {:flex           1
-                         :alignItems     "center"
-                         :justifyContent "center"}}
-          (r/text {:style {:fontSize 48}} "_"))))))
+        (grid-cell (:btc/buy-query state))
+        (grid-cell (:eth/buy-query state))
+        (grid-cell (:ltc/buy-query state))))))
 (def demo (rc/e demo-component))
 
 (defn measure-time
@@ -109,7 +89,7 @@
     [(- t2 t1) f-return]))
 
 (rc/defnrc root-component [props]
-  ;(timbre/info "Root RENDER")
+  ;(timbre/info "Root RENDER" props)
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _ (reset! *root-refresh-hook root-refresh-hook)
         ;[t ret] (measure-time #(render-state props))
@@ -134,7 +114,7 @@
     (refresh-root-hook (random-uuid))))
 
 (defn pre-render-setup! []
-  (timbre/info "pre-render...")
+  ;(timbre/info "pre-render...")
   (let [conn    (d/create-conn {})
         _       (d/listen! conn conn-render-listener)
         _       (reset! *conn conn)
@@ -144,17 +124,50 @@
                       :where
                       [?te :side "buy"]
                       [?te :product_id "BTC-USD"]]))
-        _       (ds/init-query-with-conn query-1 conn)
         query-2 (q/create-query
                   (zsxf.c/static-compile
                     '[:find ?te
                       :where
                       [?te :side "sell"]
                       [?te :product_id "BTC-USD"]]))
-        _       (ds/init-query-with-conn query-2 conn)]
+        query-3 (q/create-query
+                  (zsxf.c/static-compile
+                    '[:find ?te
+                      :where
+                      [?te :side "buy"]
+                      [?te :product_id "ETH-USD"]]))
+        query-4 (q/create-query
+                  (zsxf.c/static-compile
+                    '[:find ?te
+                      :where
+                      [?te :side "sell"]
+                      [?te :product_id "ETH-USD"]]))
+        query-5 (q/create-query
+                  (zsxf.c/static-compile
+                    '[:find ?te
+                      :where
+                      [?te :side "buy"]
+                      [?te :product_id "LTC-USD"]]))
+        query-6 (q/create-query
+                  (zsxf.c/static-compile
+                    '[:find ?te
+                      :where
+                      [?te :side "sell"]
+                      [?te :product_id "LTC-USD"]]))
+        _       (ds/init-query-with-conn query-1 conn)
+        _       (ds/init-query-with-conn query-2 conn)
+        _       (ds/init-query-with-conn query-3 conn)
+        _       (ds/init-query-with-conn query-4 conn)
+        _       (ds/init-query-with-conn query-5 conn)
+        _       (ds/init-query-with-conn query-6 conn)]
     (setup-websocket! conn)
     (root {:btc/buy-query  query-1
-           :btc/sell-query query-2})))
+           :btc/sell-query query-2
+           :eth/buy-query  query-3
+           :eth/sell-query query-4
+           :ltc/buy-query  query-5
+           :ltc/sell-query query-6
+           })))
 
 (defn init []
   (expo/register-root-component
