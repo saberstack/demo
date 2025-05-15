@@ -30,9 +30,10 @@
   [tx-time]
   (swap! *line-data
     (fn [m] (update-in m [:datasets 0 :data] (fn [v]
-                                               (if (< 999 (count v))
-                                                 [(int tx-time)]
-                                                 (conj v (int tx-time))))))))
+                                               (conj v (int tx-time)))))))
+
+(defn render-line-data [line-data]
+  (update-in line-data [:datasets 0 :data] (fn [v] (util/take-lastv 2000 v))))
 
 
 (defn render-state
@@ -143,19 +144,25 @@
         line-data' (b/->js line-data)]
     (line-chart
       (b/->js
-        {:data        line-data'
-         :width       width
-         :height      110
-         :yAxisLabel  ""
-         :yAxisSuffix "ms"
-         :chartConfig {:backgroundColor        "#fff"
-                       :backgroundGradientFrom "#fff"
-                       :backgroundGradientTo   "#fff"
-                       :decimalPlaces          1
-                       :color                  (fn [opacity] (str "rgba(0, 0, 0, " opacity ")"))
-                       :labelColor             (fn [opacity] (str "rgba(0, 0, 0, " opacity ")"))
-                       :style                  {:borderRadius 3}}
-         :bezier      false}))))
+        {:data                line-data'
+         :width               width
+         :height              100
+         :withInnerLines      false
+         :withDots            false
+         :withOuterLines      false
+         :withHorizontalLines true
+         :yAxisLabel          ""
+         :yAxisSuffix         "ms"
+         :chartConfig         {:backgroundColor          "#fff"
+                               :backgroundGradientFrom   "#fff"
+                               :propsForHorizontalLabels {:fontFamily "monospace"}
+                               :backgroundGradientTo     "#fff"
+                               :decimalPlaces            1
+                               :strokeWidth              1.5
+                               :color                    (fn [opacity] (str "rgba(0, 0, 0, " opacity ")"))
+                               :labelColor               (fn [opacity] (str "rgba(0, 0, 0, " opacity ")"))
+                               :style                    {:borderRadius 3}}
+         :bezier              false}))))
 
 (def perf-chart (rc/e perf-chart-component))
 
@@ -167,7 +174,7 @@
                     (render-state-datascript props)
                     (fn [tx-time]
                       (add-data-to-chart tx-time)))
-        line-data @*line-data]
+        line-data (render-line-data @*line-data)]
     (r/view
       {:style {:flex 1}}
       (demo {:state ret})
