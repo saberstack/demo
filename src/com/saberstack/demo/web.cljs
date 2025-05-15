@@ -1,8 +1,10 @@
 (ns com.saberstack.demo.web
-  (:require [org.zsxf.query :as q]
+  (:require [cljs-bean.core :as b]
+            [org.zsxf.query :as q]
             [react]
             [react-native :as rn]
             [ss.expo.core :as expo]
+            [react-native-chart-kit :as chart-kit]
             [org.zsxf.datalog.compiler :as zsxf.c]
             [org.zsxf.datascript :as ds]
             [datascript.core :as d]
@@ -10,12 +12,25 @@
             [ss.react-native.core :as r]
             [ss.react.root :as react-root]
             [ss.react.core :as rc]
+            [org.zsxf.util :as util]
             [ss.react.state :as state]
             [taoensso.timbre :as timbre]))
 
 (defonce *root-refresh-hook (atom nil))
+(defonce *chart-refresh-hook (atom nil))
 
 (defonce *conn (atom nil))
+
+(defonce *line-data (atom
+                      (let [data {:labels   []
+                                  :datasets [{:data []}]}]
+                        data)))
+
+(defn add-data-to-chart
+  [tx-time]
+  (swap! *line-data
+    (fn [m] (update-in m [:datasets 0 :data] (fn [v] (conj v (int tx-time)))))))
+
 
 (defn render-state
   [{:btc/keys [buy-query sell-query] :as m}]
@@ -24,17 +39,36 @@
 (defn render-state-datascript
   [{:btc/keys [buy-query sell-query]}]
   (let [conn @@*conn]
-    (into {}
-      [[:btc/buy-query (count (d/q '[:find ?te
-                                     :where
-                                     [?te :side "buy"]
-                                     [?te :product_id "BTC-USD"]]
-                                conn))]
-       [:btc/sell-query (count (d/q '[:find ?te
-                                      :where
-                                      [?te :side "sell"]
-                                      [?te :product_id "BTC-USD"]]
-                                 conn))]])))
+    {:btc/buy-query  (count (d/q '[:find ?te
+                                   :where
+                                   [?te :side "buy"]
+                                   [?te :product_id "BTC-USD"]]
+                              conn))
+     :btc/sell-query (count (d/q '[:find ?te
+                                   :where
+                                   [?te :side "sell"]
+                                   [?te :product_id "BTC-USD"]]
+                              conn))
+     :ltc/buy-query  (count (d/q '[:find ?te
+                                   :where
+                                   [?te :side "buy"]
+                                   [?te :product_id "LTC-USD"]]
+                              conn))
+     :ltc/sell-query (count (d/q '[:find ?te
+                                   :where
+                                   [?te :side "sell"]
+                                   [?te :product_id "LTC-USD"]]
+                              conn))
+     :eth/buy-query  (count (d/q '[:find ?te
+                                   :where
+                                   [?te :side "buy"]
+                                   [?te :product_id "ETH-USD"]]
+                              conn))
+     :eth/sell-query (count (d/q '[:find ?te
+                                   :where
+                                   [?te :side "sell"]
+                                   [?te :product_id "ETH-USD"]]
+                              conn))}))
 
 (def font-size 28)
 
@@ -88,14 +122,45 @@
         t2       (system-time)]
     [(- t2 t1) f-return]))
 
+
+;Chart
+(def line-chart (partial rc/create-element-js (.-LineChart ^js/Object chart-kit)))
+
+
+(rc/defnrc perf-chart-component [{:keys [line-data] :as props}]
+  (let [[_ refresh-hook] (rc/use-state (random-uuid))
+        {:keys [width height] :as w} (r/use-window-dimensions)
+        _          (reset! *chart-refresh-hook refresh-hook)
+        line-data' (b/->js line-data)]
+    (line-chart
+      (b/->js
+        {:data        line-data'
+         :width       width
+         :height      110
+         :yAxisLabel  ""
+         :yAxisSuffix "ms"
+         :chartConfig {:backgroundColor        "#fff"
+                       :backgroundGradientFrom "#fff"
+                       :backgroundGradientTo   "#fff"
+                       :decimalPlaces          1
+                       :color                  (fn [opacity] (str "rgba(0, 0, 0, " opacity ")"))
+                       :labelColor             (fn [opacity] (str "rgba(0, 0, 0, " opacity ")"))
+                       :style                  {:borderRadius 3}}
+         :bezier      false}))))
+
+(def perf-chart (rc/e perf-chart-component))
+
 (rc/defnrc root-component [props]
   ;(timbre/info "Root RENDER" props)
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
-        _ (reset! *root-refresh-hook root-refresh-hook)
-        ;[t ret] (measure-time #(render-state props))
-        [t ret] (measure-time #(render-state props))]
-    (demo {:render-time (int t)
-           :state       ret})))
+        _         (reset! *root-refresh-hook root-refresh-hook)
+        ret       (render-state-datascript props)
+        line-data @*line-data]
+    (r/view
+      {:style {:flex 1}}
+      (demo {:state ret})
+      #_(perf-chart
+        {:line-data line-data}))))
 
 (def root (rc/e root-component))
 
@@ -113,7 +178,9 @@
   (when-let [refresh-root-hook @*root-refresh-hook]
     (refresh-root-hook (random-uuid))))
 
-(defn pre-render-setup! []
+
+
+(defn render-setup! []
   ;(timbre/info "pre-render...")
   (let [conn    (d/create-conn {})
         _       (d/listen! conn conn-render-listener)
@@ -154,29 +221,53 @@
                       :where
                       [?te :side "sell"]
                       [?te :product_id "LTC-USD"]]))
-        _       (ds/init-query-with-conn query-1 conn)
-        _       (ds/init-query-with-conn query-2 conn)
-        _       (ds/init-query-with-conn query-3 conn)
-        _       (ds/init-query-with-conn query-4 conn)
-        _       (ds/init-query-with-conn query-5 conn)
-        _       (ds/init-query-with-conn query-6 conn)]
+        _       (timbre/info "setup...")
+        _       (ds/init-query-with-conn query-1 conn
+                  :tx-time-f
+                  (fn [tx-time]
+
+                    ))
+        _       (ds/init-query-with-conn query-2 conn
+                  :tx-time-f
+                  (fn [tx-time]
+
+                    ))
+        _       (ds/init-query-with-conn query-3 conn
+                  :tx-time-f
+                  (fn [tx-time]
+
+                    ))
+        _       (ds/init-query-with-conn query-4 conn
+                  :tx-time-f
+                  (fn [query-4-tx-time]
+                    ))
+        _       (ds/init-query-with-conn query-5 conn
+                  :tx-time-f
+                  (fn [query-5-tx-time]
+                    ))
+        _       (ds/init-query-with-conn query-6 conn
+                  :tx-time-f
+                  (fn [query-6-tx-time]
+                    ))]
     (setup-websocket! conn)
-    (root {:btc/buy-query  query-1
-           :btc/sell-query query-2
-           :eth/buy-query  query-3
-           :eth/sell-query query-4
-           :ltc/buy-query  query-5
-           :ltc/sell-query query-6
-           })))
+    ;Render here
+    (r/view {:style {:flex 1}}
+      (root {:btc/buy-query  query-1
+             :btc/sell-query query-2
+             :eth/buy-query  query-3
+             :eth/sell-query query-4
+             :ltc/buy-query  query-5
+             :ltc/sell-query query-6}))
+    ))
 
 (defn init []
   (expo/register-root-component
-    (fn [] (pre-render-setup!))))
+    (fn [] (render-setup!))))
 
 ;; the function figwheel-rn-root MUST be provided. It will be called by
 ;; by the react-native-figwheel-bridge to render your application.
 (defn figwheel-rn-root []
-  (pre-render-setup!))
+  (render-setup!))
 
 (defn -main [& args]
   (init)
