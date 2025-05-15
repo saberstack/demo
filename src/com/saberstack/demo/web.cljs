@@ -29,7 +29,10 @@
 (defn add-data-to-chart
   [tx-time]
   (swap! *line-data
-    (fn [m] (update-in m [:datasets 0 :data] (fn [v] (conj v (int tx-time)))))))
+    (fn [m] (update-in m [:datasets 0 :data] (fn [v]
+                                               (if (< 999 (count v))
+                                                 [(int tx-time)]
+                                                 (conj v (int tx-time))))))))
 
 
 (defn render-state
@@ -39,36 +42,60 @@
 (defn render-state-datascript
   [{:btc/keys [buy-query sell-query]}]
   (let [conn @@*conn]
-    {:btc/buy-query  (count (d/q '[:find ?te
-                                   :where
-                                   [?te :side "buy"]
-                                   [?te :product_id "BTC-USD"]]
-                              conn))
-     :btc/sell-query (count (d/q '[:find ?te
-                                   :where
-                                   [?te :side "sell"]
-                                   [?te :product_id "BTC-USD"]]
-                              conn))
-     :ltc/buy-query  (count (d/q '[:find ?te
-                                   :where
-                                   [?te :side "buy"]
-                                   [?te :product_id "LTC-USD"]]
-                              conn))
-     :ltc/sell-query (count (d/q '[:find ?te
-                                   :where
-                                   [?te :side "sell"]
-                                   [?te :product_id "LTC-USD"]]
-                              conn))
-     :eth/buy-query  (count (d/q '[:find ?te
-                                   :where
-                                   [?te :side "buy"]
-                                   [?te :product_id "ETH-USD"]]
-                              conn))
-     :eth/sell-query (count (d/q '[:find ?te
-                                   :where
-                                   [?te :side "sell"]
-                                   [?te :product_id "ETH-USD"]]
-                              conn))}))
+    {:btc/buy-query
+     (util/time-f
+       (count (d/q '[:find ?te
+                     :where
+                     [?te :side "buy"]
+                     [?te :product_id "BTC-USD"]]
+                conn))
+       (fn [tx-time]
+         (add-data-to-chart tx-time)))
+     :btc/sell-query
+     (util/time-f
+       (count (d/q '[:find ?te
+                     :where
+                     [?te :side "sell"]
+                     [?te :product_id "BTC-USD"]]
+                conn))
+       (fn [tx-time]
+         (add-data-to-chart tx-time)))
+     :ltc/buy-query
+     (util/time-f
+       (count (d/q '[:find ?te
+                     :where
+                     [?te :side "buy"]
+                     [?te :product_id "LTC-USD"]]
+                conn))
+       (fn [tx-time]
+         (add-data-to-chart tx-time)))
+     :ltc/sell-query
+     (util/time-f
+       (count (d/q '[:find ?te
+                     :where
+                     [?te :side "sell"]
+                     [?te :product_id "LTC-USD"]]
+                conn))
+       (fn [tx-time]
+         (add-data-to-chart tx-time)))
+     :eth/buy-query
+     (util/time-f
+       (count (d/q '[:find ?te
+                     :where
+                     [?te :side "buy"]
+                     [?te :product_id "ETH-USD"]]
+                conn))
+       (fn [tx-time]
+         (add-data-to-chart tx-time)))
+     :eth/sell-query
+     (util/time-f
+       (count (d/q '[:find ?te
+                     :where
+                     [?te :side "sell"]
+                     [?te :product_id "ETH-USD"]]
+                conn))
+       (fn [tx-time]
+         (add-data-to-chart tx-time)))}))
 
 (def font-size 28)
 
@@ -159,7 +186,7 @@
     (r/view
       {:style {:flex 1}}
       (demo {:state ret})
-      #_(perf-chart
+      (perf-chart
         {:line-data line-data}))))
 
 (def root (rc/e root-component))
