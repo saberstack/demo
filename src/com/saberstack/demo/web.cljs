@@ -23,9 +23,9 @@
 
 (defonce *conn (atom nil))
 
-(def line-data-empty (let [data {:labels  []
-                                :datasets [{:data [0]}]}]
-                      data))
+(def line-data-empty (let [data {:labels   []
+                                 :datasets [{:data [0]}]}]
+                       data))
 
 (defonce *line-data (atom line-data-empty))
 
@@ -103,7 +103,7 @@
                            :alignItems     "center"
                            :justifyContent "flex-end"
                            :flexDirection  "row"}}
-            (r/text {:style   {:fontSize 15 :fontWeight "bold" :color "white"}
+            (r/text {:style   {:fontSize 13 :fontWeight "bold" :color "white"}
                      :onPress (fn [_]
                                 (swap! *boot-root-state
                                   (fn [m]
@@ -114,9 +114,9 @@
                                   (refresh-hook (random-uuid))))}
               switch-string)
 
-            (r/text {:style {:fontSize 15 :color "white"}}
-              " | Cryptocurrency live sentiment statistics | ")
-            (r/text {:style {:fontSize 15 :fontWeight "bold" :color "white"} :href "https://github.com/saberstack/zsxf"}
+            (r/text {:style {:fontSize 13 :color "white"}}
+              " | Crypto live sentiment stats | ")
+            (r/text {:style {:fontSize 13 :fontWeight "bold" :color "white"} :href "https://github.com/saberstack/zsxf"}
               "Github"))))
       (r/view {:style {:flex 0.2}}
         (r/view {:style {:flex 1 :flexDirection "row"}}
@@ -170,7 +170,7 @@
                                :backgroundGradientFrom   "#fff"
                                :propsForHorizontalLabels {:fontFamily "monospace"}
                                :backgroundGradientTo     "#fff"
-                               :decimalPlaces            3
+                               :decimalPlaces            1
                                :strokeWidth              1.5
                                :color                    (fn [opacity] (str "rgba(0, 0, 0, " opacity ")"))
                                :labelColor               (fn [opacity] (str "rgba(0, 0, 0, " opacity ")"))
