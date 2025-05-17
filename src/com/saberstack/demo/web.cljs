@@ -294,7 +294,7 @@
     (r/view {:style {:flex 1}}
       (root {:render-state-f :ds}))))
 
-(rc/defnrc boot-root-component [{:keys [render] :as props}]
+(rc/defnrc boot-root-component [_]
   (let [[_ refresh-hook] (rc/use-state (random-uuid))
         _ (reset! *boot-root-refresh-hook refresh-hook)
         {:keys [render]} @*boot-root-state]
