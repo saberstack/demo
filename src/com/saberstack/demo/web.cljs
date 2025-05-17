@@ -10,10 +10,8 @@
             [datascript.core :as d]
             [com.saberstack.demo.ticker-feed :as ticker-feed]
             [ss.react-native.core :as r]
-            [ss.react.root :as react-root]
             [ss.react.core :as rc]
             [org.zsxf.util :as util]
-            [ss.react.state :as state]
             [taoensso.timbre :as timbre]))
 
 
