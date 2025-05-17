@@ -34,7 +34,7 @@
                                                (conj v (double tx-time)))))))
 
 (defn render-line-data [line-data]
-  (update-in line-data [:datasets 0 :data] (fn [v] (util/take-lastv 2000 v))))
+  (update-in line-data [:datasets 0 :data] (fn [v] (util/take-lastv 300 v))))
 
 
 (defn render-state-ivm
