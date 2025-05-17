@@ -1,5 +1,5 @@
 {:paths ["src" "target"]
- :deps  {org.clojure/clojurescript     {:mvn/version "1.12.38"}
+ :deps  {org.clojure/clojurescript     {:mvn/version "1.12.42"}
          datascript/datascript         {:git/url "https://github.com/saberstack/datascript"
                                         :git/sha "c6dd4ac6ec784d4720dd0a5ecabd055e2fda9c95"}
 
