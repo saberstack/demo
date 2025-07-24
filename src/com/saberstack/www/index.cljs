@@ -35,23 +35,21 @@
         app-state @*app-state]
     (timbre/info "Rendering root component with app-state:" app-state)
     (timbre/info "Fonts loaded:" fonts-loaded "Error:" fonts-error)
-    (r/view
-      {:style {:flex 1 :backgroundColor "#08090a"}}
+    (r/scroll-view
+      {:style {:flex 1 :backgroundColor "#08090a"}
+       :contentContainerStyle {:marginLeft "auto" :marginRight "auto"} }
       (r/view {:style {:flex 1 :flexDirection "row"}}
-        (r/view {:style {:flex 0.1 :flexDirection "row"}})
+
         (r/view {:style {:flex           1
                          :flexDirection  "column"
                          :maxWidth       900
                          :justifyContent "flex-start"
                          :marginVertical   "1%"
-                         :marginHorizontal "2%"}}
-          (r/image {:style {:margin "1%"
-}
-                    :source {:uri    logo-transparent-background
+                         :marginHorizontal "5%"}}
+          (r/image {:source {:uri    logo-transparent-background
                              :width  100
                              :height 100}})
-          (r/view {:style {:marginVertical   "1%"
-                           :marginHorizontal "2%"}}
+          (r/view {:style {:marginVertical   "1%"}}
             #_(r/text {:style
                        {:color    "#f7f8f8" :fontFamily "Inter-Medium" :letterSpacing "-0.038em"
                         :fontSize 24 :textAlign "left"
@@ -83,7 +81,7 @@
                   "\nPostgres, Datomic, and even Parquet files."
                   "\n"
                   "We are canceling the data swamp apocalypse.")))
-            (r/view {:style {:marginTop "3%"}}
+            (r/view {:style {:marginTop "3%" :marginBottom "20%"}}
               (r/touchable-opacity
                 {:onPress (fn [_] (r/open-url "https://github.com/saberstack/zsxf"))
                  :style
@@ -91,18 +89,15 @@
                   :color    "#f7f8f8" :fontFamily "Inter-Medium"
                   :fontSize 18 :textAlign "left"
                   }}
-                (str
-                  "› github.com/saberstack/zsxf")))
-            (r/touchable-opacity
-              {:onPress (fn [_] (r/open-url "https://discord.gg/J4GWa4DBKu"))
-               :style
-               {:margin   "1%"
-                :color    "#f7f8f8" :fontFamily "Inter-Medium"
-                :fontSize 18 :textAlign "left"
-                }}
-              (str
-                "› discord: join here"))))
-        (r/view {:style {:flex 0.1 :flexDirection "row"}}))
+                (str "› github.com/saberstack/zsxf"))
+              (r/touchable-opacity
+                {:onPress (fn [_] (r/open-url "https://discord.gg/J4GWa4DBKu"))
+                 :style
+                 {:margin   "1%"
+                  :color    "#f7f8f8" :fontFamily "Inter-Medium"
+                  :fontSize 18 :textAlign "left"
+                  }}
+                (str "› discord: join here"))))))
 
       (comment
         "Every time a query runs, most databases compute it from scratch."
