@@ -1,0 +1,7 @@
+#!/bin/zsh
+
+PROD_INDEX_FILE=index.js
+clj -M -m figwheel.main -O advanced -bo www-prod
+cat target_prod/main.js > ${PROD_INDEX_FILE}
+bin/index-js-fix-www.clj
+npx expo export --platform web

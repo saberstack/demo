@@ -1,7 +1,11 @@
 (ns com.saberstack.www.index
-  (:require [ss.expo.core :as expo]
+  (:require [cljs-bean.core :as b]
+            [ss.expo.core :as expo]
             [ss.react-native.core :as r]
             [ss.react.core :as rc]
+            [expo-font :refer [useFonts] :rename {useFonts use-fonts}]
+            ["@expo-google-fonts/inter" :as font-inter
+             :refer [Inter_900Black Inter_400Regular Inter_500Medium Inter_600SemiBold]]
             [taoensso.timbre :as timbre]))
 
 ;; Manages the application's top-level state.
@@ -10,7 +14,13 @@
 (defonce *bootloader-refresh-hook (atom nil))
 (defonce *root-refresh-hook (atom nil))
 (defonce *bootloader-state (atom {:render :index}))
-(defonce *app-state (atom {:company-name "Saberstack"}))
+(defonce *app-state
+  (atom {:company-name "Saberstack"
+         :one-liner
+         "Rebuilding databases to answer the hardest questions in milliseconds.\nNo Snowflake required."
+         }))
+
+(def logo-transparent-background "https://github.com/saberstack/logo/blob/78264ed74f0a8b980dad30495a42d61b0de143f5/logo-transparent-background.png?raw=true")
 
 ;; The primary UI of the application.
 ;; It captures its own refresh hook to allow external processes
@@ -18,12 +28,89 @@
 (rc/defnrc root-component [{:keys [] :as _props}]
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _         (reset! *root-refresh-hook root-refresh-hook)
+        [fonts-loaded fonts-error] (use-fonts (b/->js {"Inter-Black"    Inter_900Black
+                                                       "Inter-Regular"  Inter_400Regular
+                                                       "Inter-Medium"   Inter_500Medium
+                                                       "Inter-SemiBold" Inter_600SemiBold}))
         app-state @*app-state]
     (timbre/info "Rendering root component with app-state:" app-state)
+    (timbre/info "Fonts loaded:" fonts-loaded "Error:" fonts-error)
     (r/view
-      {:style {:flex 1 :backgroundColor "black"}}
-      (r/text {:style {:color "white"}}
-        (:company-name app-state)))))
+      {:style {:flex 1 :backgroundColor "#08090a"}}
+      (r/view {:style {:flex 1 :flexDirection "row"}}
+        (r/view {:style {:flex 0.1 :flexDirection "row"}})
+        (r/view {:style {:flex           1
+                         :flexDirection  "column"
+                         :maxWidth       900
+                         :justifyContent "flex-start"
+                         :marginVertical   "1%"
+                         :marginHorizontal "2%"}}
+          (r/image {:style {:margin "1%"
+}
+                    :source {:uri    logo-transparent-background
+                             :width  100
+                             :height 100}})
+          (r/view {:style {:marginVertical   "1%"
+                           :marginHorizontal "2%"}}
+            #_(r/text {:style
+                       {:color    "#f7f8f8" :fontFamily "Inter-Medium" :letterSpacing "-0.038em"
+                        :fontSize 24 :textAlign "left"
+                        }}
+                (str "Saberstack"))
+            (r/view {:style {:marginTop "1"}}
+              (r/text {:style
+                       {:color    "#f7f8f8" :fontFamily "Inter-Medium" :letterSpacing "-0.038em"
+                        :fontSize 40 :textAlign "left"
+                        }}
+                (:one-liner app-state)))
+            (r/view {:style {:marginTop "3%"}}
+              (r/text
+                {:style
+                 {:color      "#b5b6b6"
+                  :fontFamily "Inter-Regular" :letterSpacing "-0.01em"
+                  :fontSize   22 :textAlign "left"}}
+                (str
+                  "Data warehouse queries run for minutes, sync takes hours, and data is always stale. "
+                  "Are we done? Is this it? At Saberstack, we don't think so.")))
+
+            (r/view {:style {:marginTop "3%"}}
+              (r/text {:style
+                       {:color    "#f7f8f8" :fontFamily "Inter-Medium" :letterSpacing "-0.038em"
+                        :fontSize 24 :textAlign "left"
+                        }}
+                (str
+                  "A new incremental view maintenance engine for databases."
+                  "\nPostgres, Datomic, and even Parquet files."
+                  "\n"
+                  "We are canceling the data swamp apocalypse.")))
+            (r/view {:style {:marginTop "3%"}}
+              (r/touchable-opacity
+                {:onPress (fn [_] (r/open-url "https://github.com/saberstack/zsxf"))
+                 :style
+                 {:margin   "1%"
+                  :color    "#f7f8f8" :fontFamily "Inter-Medium"
+                  :fontSize 18 :textAlign "left"
+                  }}
+                (str
+                  "› github.com/saberstack/zsxf")))
+            (r/touchable-opacity
+              {:onPress (fn [_] (r/open-url "https://discord.gg/J4GWa4DBKu"))
+               :style
+               {:margin   "1%"
+                :color    "#f7f8f8" :fontFamily "Inter-Medium"
+                :fontSize 18 :textAlign "left"
+                }}
+              (str
+                "› discord: join here"))))
+        (r/view {:style {:flex 0.1 :flexDirection "row"}}))
+
+      (comment
+        "Every time a query runs, most databases compute it from scratch."
+        "\nEven when the query changes very little. Even when the query is exactly the same."
+        "\nAs the amount of data in a database grows, the time required to answer queries increases. Most databases timeout or crash completely."
+        "\n\nThe need to answer analytics queries in some fashion gave rise to data warehouses."
+        )
+      )))
 ;; Creates a renderable React element from the root component.
 (def root (rc/e root-component))
 

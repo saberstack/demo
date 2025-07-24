@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ZSXF Demo",
+    "name": "Saberstack",
     "slug": "ZSXFDemo",
     "version": "1.0.0",
     "orientation": "portrait",
@@ -24,6 +24,9 @@
     },
     "web": {
       "favicon": "./assets/favicon.png"
-    }
+    },
+    "plugins": [
+      "expo-font"
+    ]
   }
 }
