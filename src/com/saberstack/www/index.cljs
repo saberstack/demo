@@ -1,7 +1,8 @@
 (ns com.saberstack.www.index
   (:require [ss.expo.core :as expo]
             [ss.react-native.core :as r]
-            [ss.react.core :as rc]))
+            [ss.react.core :as rc]
+            [taoensso.timbre :as timbre]))
 
 ;; Manages the application's top-level state.
 ;; Using `defonce` and atoms ensures that state is preserved
@@ -18,6 +19,7 @@
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _         (reset! *root-refresh-hook root-refresh-hook)
         app-state @*app-state]
+    (timbre/info "Rendering root component with app-state:" app-state)
     (r/view
       {:style {:flex 1 :backgroundColor "black"}}
       (r/text {:style {:color "white"}}
@@ -50,17 +52,26 @@
 ;; to component re-renders. The state change is ignored if the new state
 ;; is the same as the old state, preventing unnecessary updates.
 (defn watch-refresh-hook [*refresh-hook]
+  (timbre/debug "calling watch-refresh-hook")
   (fn [_watch-key _atom old-state new-state]
+    ;;(timbre/debug "calling watch-refresh-hook")
+    ;;(timbre/debug "old-state:" old-state)
+    ;;(timbre/debug "new-state:" new-state)
     (if (= old-state new-state)
       true
       (when-let [refresh-hook @*refresh-hook]
         (refresh-hook (random-uuid))))))
 
+(defn init-watches []
+  (timbre/info "Adding watches to bootloader and root refresh hooks")
+  (add-watch *bootloader-state :watch-1 (watch-refresh-hook *bootloader-refresh-hook))
+  (add-watch *app-state :watch-1 (watch-refresh-hook *root-refresh-hook))
+  )
+
 ;; Initializes the application by registering the top-level
 ;; component with Expo. This is the standard entry point.
 (defn init []
-  (add-watch *bootloader-refresh-hook :watch-1 (watch-refresh-hook *bootloader-refresh-hook))
-  (add-watch *app-state :watch-1 (watch-refresh-hook *root-refresh-hook))
+  (init-watches)
   (expo/register-root-component
     (fn []
       (bootloader {}))))
@@ -68,11 +79,14 @@
 ;; Provides the entry point for Figwheel's hot-reloading bridge.
 ;; This function MUST be provided for the development environment to work correctly.
 (defn figwheel-rn-root []
+  (timbre/info "figwheel-rn-root called")
+  (init-watches)
   (bootloader {}))
 
 (defn -main [& args]
-  (init)
-  (println "Hello RN web from CLJS"))
+  (timbre/info "-main called with args:" args)
+  (println "Hello RN web from CLJS")
+  (init))
 
 ;; This form ensures the application is initialized for production builds,
 ;; where Figwheel is not present.
