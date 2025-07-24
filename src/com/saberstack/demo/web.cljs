@@ -1,12 +1,12 @@
 (ns com.saberstack.demo.web
   (:require [cljs-bean.core :as b]
+            [org.zsxf.input.datascript :as ds]
             [org.zsxf.query :as q]
             [react]
             [react-native :as rn]
             [ss.expo.core :as expo]
             [react-native-chart-kit :as chart-kit]
             [org.zsxf.datalog.compiler :as zsxf.c]
-            [org.zsxf.datascript :as ds]
             [datascript.core :as d]
             [com.saberstack.demo.ticker-feed :as ticker-feed]
             [ss.react-native.core :as r]

@@ -1,0 +1,2 @@
+^{:react-native :expo}
+{:main com.saberstack.www.index}
