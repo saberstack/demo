@@ -33,28 +33,23 @@
                                                        "Inter-Medium"   Inter_500Medium
                                                        "Inter-SemiBold" Inter_600SemiBold}))
         app-state @*app-state]
-    (timbre/info "Rendering root component with app-state:" app-state)
-    (timbre/info "Fonts loaded:" fonts-loaded "Error:" fonts-error)
+    ;(timbre/info "Rendering root component with app-state:" app-state)
+    ;(timbre/info "Fonts loaded:" fonts-loaded "Error:" fonts-error)
     (r/scroll-view
-      {:style {:flex 1 :backgroundColor "#08090a"}
-       :contentContainerStyle {:marginLeft "auto" :marginRight "auto"} }
+      {:style                 {:flex 1 :backgroundColor "#08090a"}
+       :contentContainerStyle {:marginLeft "auto" :marginRight "auto"}}
       (r/view {:style {:flex 1 :flexDirection "row"}}
 
-        (r/view {:style {:flex           1
-                         :flexDirection  "column"
-                         :maxWidth       900
-                         :justifyContent "flex-start"
+        (r/view {:style {:flex             1
+                         :flexDirection    "column"
+                         :maxWidth         900
+                         :justifyContent   "flex-start"
                          :marginVertical   "1%"
                          :marginHorizontal "5%"}}
-          (r/image {:source {:uri    logo-transparent-background
-                             :width  100
-                             :height 100}})
-          (r/view {:style {:marginVertical   "1%"}}
-            #_(r/text {:style
-                       {:color    "#f7f8f8" :fontFamily "Inter-Medium" :letterSpacing "-0.038em"
-                        :fontSize 24 :textAlign "left"
-                        }}
-                (str "Saberstack"))
+          (r/image {:source {:uri    "./assets/saberstack-logo-t@2x.png"
+                             :width  64
+                             :height 64}})
+          (r/view {:style {:marginVertical "1%"}}
             (r/view {:style {:marginTop "1"}}
               (r/text {:style
                        {:color    "#f7f8f8" :fontFamily "Inter-Medium" :letterSpacing "-0.038em"
@@ -83,21 +78,17 @@
                   "We are canceling the data swamp apocalypse.")))
             (r/view {:style {:marginTop "3%" :marginBottom "20%"}}
               (r/touchable-opacity
-                {:onPress (fn [_] (r/open-url "https://github.com/saberstack/zsxf"))
-                 :style
-                 {:margin   "1%"
-                  :color    "#f7f8f8" :fontFamily "Inter-Medium"
-                  :fontSize 18 :textAlign "left"
-                  }}
-                (str "› github.com/saberstack/zsxf"))
+                {:onPress (fn [_] (r/open-url "https://github.com/saberstack/zsxf"))}
+                (r/text {:style {:margin   "1%"
+                                 :color    "#f7f8f8" :fontFamily "Inter-Medium"
+                                 :fontSize 18 :textAlign "left"}}
+                  "› github.com/saberstack/zsxf"))
               (r/touchable-opacity
-                {:onPress (fn [_] (r/open-url "https://discord.gg/J4GWa4DBKu"))
-                 :style
-                 {:margin   "1%"
-                  :color    "#f7f8f8" :fontFamily "Inter-Medium"
-                  :fontSize 18 :textAlign "left"
-                  }}
-                (str "› discord: join here"))))))
+                {:onPress (fn [_] (r/open-url "https://discord.gg/J4GWa4DBKu"))}
+                (r/text {:style {:margin   "1%"
+                                 :color    "#f7f8f8" :fontFamily "Inter-Medium"
+                                 :fontSize 18 :textAlign "left"}}
+                  "› discord: join here"))))))
 
       (comment
         "Every time a query runs, most databases compute it from scratch."
@@ -134,7 +125,6 @@
 ;; to component re-renders. The state change is ignored if the new state
 ;; is the same as the old state, preventing unnecessary updates.
 (defn watch-refresh-hook [*refresh-hook]
-  (timbre/debug "calling watch-refresh-hook")
   (fn [_watch-key _atom old-state new-state]
     ;;(timbre/debug "calling watch-refresh-hook")
     ;;(timbre/debug "old-state:" old-state)
@@ -145,7 +135,7 @@
         (refresh-hook (random-uuid))))))
 
 (defn init-watches []
-  (timbre/info "Adding watches to bootloader and root refresh hooks")
+  ;(timbre/info "Adding watches to bootloader and root refresh hooks")
   (add-watch *bootloader-state :watch-1 (watch-refresh-hook *bootloader-refresh-hook))
   (add-watch *app-state :watch-1 (watch-refresh-hook *root-refresh-hook))
   )
@@ -161,13 +151,13 @@
 ;; Provides the entry point for Figwheel's hot-reloading bridge.
 ;; This function MUST be provided for the development environment to work correctly.
 (defn figwheel-rn-root []
-  (timbre/info "figwheel-rn-root called")
+  ;(timbre/info "figwheel-rn-root called")
   (init-watches)
   (bootloader {}))
 
 (defn -main [& args]
-  (timbre/info "-main called with args:" args)
-  (println "Hello RN web from CLJS")
+  ;(timbre/info "-main called with args:" args)
+  ;(println "Hello RN web from CLJS")
   (init))
 
 ;; This form ensures the application is initialized for production builds,
