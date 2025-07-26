@@ -7,3 +7,4 @@ bin/index-js-fix-www.clj
 npx expo export --platform web
 mkdir -p dist/assets
 cp saberstack-logo-t*png dist/assets/
+(cd dist && zip -r -X "../dist.zip" .)

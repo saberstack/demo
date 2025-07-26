@@ -102,8 +102,7 @@
 
 ;; A wrapper function that renders the main application view.
 (defn render-setup-index [& {:keys []}]
-  (r/view {:style {:flex 1}}
-    (root {})))
+  (root {}))
 
 ;; This component acts as a bootloader or a simple router.
 ;; It consults the shared application state (`*bootloader-state`)
