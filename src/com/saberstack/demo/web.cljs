@@ -7,6 +7,7 @@
             [ss.expo.core :as expo]
             [react-native-chart-kit :as chart-kit]
             [org.zsxf.datalog.compiler :as zsxf.c]
+            [org.zsxf.type.zset]
             [datascript.core :as d]
             [com.saberstack.demo.ticker-feed :as ticker-feed]
             [ss.react-native.core :as r]
@@ -217,37 +218,37 @@
         _       (d/listen! conn conn-render-listener)
         _       (reset! *conn conn)
         query-1 (q/create-query
-                  (zsxf.c/static-compile
+                  (zsxf.c/compile
                     '[:find ?te
                       :where
                       [?te :side "buy"]
                       [?te :product_id "BTC-USD"]]))
         query-2 (q/create-query
-                  (zsxf.c/static-compile
+                  (zsxf.c/compile
                     '[:find ?te
                       :where
                       [?te :side "sell"]
                       [?te :product_id "BTC-USD"]]))
         query-3 (q/create-query
-                  (zsxf.c/static-compile
+                  (zsxf.c/compile
                     '[:find ?te
                       :where
                       [?te :side "buy"]
                       [?te :product_id "ETH-USD"]]))
         query-4 (q/create-query
-                  (zsxf.c/static-compile
+                  (zsxf.c/compile
                     '[:find ?te
                       :where
                       [?te :side "sell"]
                       [?te :product_id "ETH-USD"]]))
         query-5 (q/create-query
-                  (zsxf.c/static-compile
+                  (zsxf.c/compile
                     '[:find ?te
                       :where
                       [?te :side "buy"]
                       [?te :product_id "LTC-USD"]]))
         query-6 (q/create-query
-                  (zsxf.c/static-compile
+                  (zsxf.c/compile
                     '[:find ?te
                       :where
                       [?te :side "sell"]

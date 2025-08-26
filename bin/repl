@@ -1,1 +1,1 @@
-clj -M -m figwheel.main -b web-dev -r
+clj -M -m figwheel.main --clean -b web-dev -r

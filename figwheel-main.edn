@@ -1,1 +1,1 @@
-{:ring-server-options {:port 9500 :host "192.168.86.142"}}
+{:ring-server-options {:port 9500 :host "192.168.86.20"}}
