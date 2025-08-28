@@ -9,6 +9,35 @@
             [ss.react.core :as rc]
             [taoensso.timbre :as timbre]))
 
+(def color-near-black "#08090a")
+(def color-near-white "#f7f8f8")
+(def color-gray "#b5b6b6")
+
+(defn ->color-near-white [opacity]
+  (str "rgba(247,248,248," opacity ")"))
+
+(defn str-arrow>
+  ([s] (str-arrow> 16 s))
+  ([size s]
+   (r/text {}
+     (r/text {:style {:fontSize size}}
+       "› ")
+     s)))
+
+(defn str-arrow-down
+  ([s] (str-arrow-down 16 s))
+  ([size s]
+   (r/text {}
+     (r/text {:style {:fontSize size :position "relative" :top -2}}
+       (str "⌄ "))
+     s)))
+
+(defn live []
+  (r/text
+    {:style {:marginHorizontal "3%"
+             :fontSize         9 :color color-near-white :fontFamily "Inter-Bold" :backgroundColor "green" :padding 4 :borderRadius 4}}
+    "LIVE"))
+
 ;; The primary UI of the application.
 (rc/defnrc root-component [{:keys [] :as _props}]
   ;; A refresh hook to allow external processes to trigger a re-render
@@ -19,54 +48,54 @@
     ;(timbre/info "Rendering root component with app-state:" app-state)
     ;(timbre/info "Fonts loaded:" fonts-loaded "Error:" fonts-error)
     (r/scroll-view
-      {:style                 {:flex 1 :backgroundColor "#08090a"}
-       :contentContainerStyle {:marginLeft "auto" :marginRight "auto"}}
-      (r/view {:style {:flex 1 :flexDirection "row"}}
+      {:style                 {:flex 1 :backgroundColor color-near-black}
+       :contentContainerStyle {}}
+      (r/view {:style {:backgroundColor color-near-black :alignSelf "flex-start" :padding "1%" :marginLeft "1%"}}
+        (component/logo))
+      #_(r/view {:style {:flex 1 :backgroundColor "purple"}}
 
-        (r/view {:style {:flex             1
-                         :flexDirection    "column"
-                         :maxWidth         900
-                         :justifyContent   "flex-start"
-                         :marginVertical   "1%"
-                         :marginHorizontal "5%"}}
-          (component/logo)
-          (r/view {:style {:marginVertical "1%"}}
-              (r/view {:style {:marginTop "1"}}
-                (r/text {:style
-                         {:color    "#f7f8f8" :fontFamily "Inter-Medium" :letterSpacing "-0.038em"
-                          :fontSize 40 :textAlign "left"
-                          }}
-                  (str (:one-liner app-state))))
-              (r/view {:style {:marginTop "3%"}}
-                  (r/text
-                    {:style
-                     {:color      "#b5b6b6"
-                      :fontFamily "Inter-Regular" :letterSpacing "-0.01em"
-                      :fontSize   22 :textAlign "left"}}
-                    (str)))
+          (r/view
+            {:style {:alignSelf       "flex-start"
+                     :backgroundColor "silver"}}
+            (component/logo)))
+      (r/view {:style {:minHeight 500 :flexDirection "row"}}
+        (r/view {:style {:flex 2.5
+                         :maxWidth 400
+                         :backgroundColor "black" :padding "2%" :justifyContent "flex-start"}}
+          (r/text {:style {:marginBottom "8%"
+                           :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}} "Live Datasets")
+          (r/view {}
+            (r/view {:style {:marginBottom "6%"}}
+              (r/text
+                {:style {:fontFamily "Inter-SemiBold" :color color-near-white :fontSize 23 :marginBottom "auto"}}
+                (str-arrow-down 15 "HackerNews")
+                )
 
-              #_(r/view {:style {:marginTop "3%"}}
-                  (r/text {:style
-                           {:color    "#f7f8f8" :fontFamily "Inter-Medium" :letterSpacing "-0.038em"
-                            :fontSize 24 :textAlign "left"
-                            }}
-                    (str
-                      "A new incremental view maintenance engine for databases."
-                      "\nPostgres, Datomic, and even Parquet files."
-                      "\n"
-                      "We are canceling the data swamp apocalypse.")))
-              #_(r/view {:style {:marginTop "3%" :marginBottom "20%"}}
-                  (r/touchable-opacity
-                    {:onPress (fn [_] (r/open-url "https://github.com/saberstack/zsxf"))}
-                    (r/text {:style {:margin   "1%"
-                                     :color    "#f7f8f8" :fontFamily "Inter-Medium"
-                                     :fontSize 18 :textAlign "left"}}
-                      "› github.com/saberstack/zsxf"))
-                  (r/touchable-opacity
-                    {:onPress (fn [_] (r/open-url "https://discord.gg/J4GWa4DBKu"))}
-                    (r/text {:style {:margin   "1%"
-                                     :color    "#f7f8f8" :fontFamily "Inter-Medium"
-                                     :fontSize 18 :textAlign "left"}}
-                      "› discord: join here")))))))))
+              (r/text {:style {:marginLeft "5%" :fontFamily "Inter-Regular" :fontSize 12 :color "darkgray"}}
+                "242,761,759 items"
+                (live)))
+            (r/touchable-opacity {:style {:marginLeft "5%" :marginBottom "5%"}}
+              (r/text {:style {:fontFamily "Inter-SemiBold" :color color-near-white :fontSize 15 :marginBottom "auto"}}
+                (str-arrow> "All mentions of the word \"Clojure\" by specific user")))
+
+            (r/touchable-opacity {:style {:marginLeft "5%" :marginBottom "5%"}}
+              (r/text {:style {:fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
+                (str-arrow> "All HackerNews users since launch"))))
+
+          )
+        (r/view {:style {:width 1 :backgroundColor (->color-near-white 0.05)}})
+        (r/view {:style {:flex 6 :backgroundColor "black" :padding "2%" :justifyContent "flex-start"}}
+          (r/text {:style {:marginBottom "4%"
+                           :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}} "Query")
+          (r/text {:style {:color color-near-white :fontFamily "monospace" :marginBottom "5%"}}
+            "'[:find ?txt\n  :where\n  [?e :hn.item/by ?user]\n  [?e :hn.item/text ?txt]\n  [(clojure.string/includes? ?user \"raspasov\")]\n  [(clojure.string/includes? ?txt \"Clojure\")]]")
+          (r/text {:style {:marginBottom "3%"
+                           :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}} "Live Results")
+          (r/text {:style {:color color-gray :fontFamily "monospace"}}
+            "#{...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...}")
+          )
+        )
+
+      )))
 ;; Creates a renderable React element from the root component.
 (def root (rc/e root-component))
