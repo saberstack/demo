@@ -12,6 +12,7 @@
 (def color-near-black "#08090a")
 (def color-near-white "#f7f8f8")
 (def color-gray "#b5b6b6")
+(def color-black "black")
 
 (defn ->color-near-white [opacity]
   (str "rgba(247,248,248," opacity ")"))
@@ -32,11 +33,13 @@
        (str "⌄ "))
      s)))
 
-(defn live []
-  (r/text
-    {:style {:marginHorizontal "3%"
-             :fontSize         9 :color color-near-white :fontFamily "Inter-Bold" :backgroundColor "green" :padding 4 :borderRadius 4}}
-    "LIVE"))
+(defn live
+  ([] (live 1))
+  ([size]
+   (r/text
+     {:style {:marginHorizontal (* size 4)
+              :fontSize         (* size 9) :color color-near-white :fontFamily "Inter-Bold" :backgroundColor "green" :padding (* size 3) :borderRadius (* size 4)}}
+     "LIVE")))
 
 ;; The primary UI of the application.
 (rc/defnrc root-component [{:keys [] :as _props}]
@@ -45,23 +48,24 @@
         _         (reset! state/*root-refresh-hook root-refresh-hook)
         [fonts-loaded fonts-error] (useFonts (font/inter))
         app-state @state/*app-state]
-    ;(timbre/info "Rendering root component with app-state:" app-state)
-    ;(timbre/info "Fonts loaded:" fonts-loaded "Error:" fonts-error)
     (r/scroll-view
       {:style                 {:flex 1 :backgroundColor color-near-black}
        :contentContainerStyle {}}
-      (r/view {:style {:backgroundColor color-near-black :alignSelf "flex-start" :padding "1%" :marginLeft "1%"}}
-        (component/logo))
-      #_(r/view {:style {:flex 1 :backgroundColor "purple"}}
+      ;Header
 
-          (r/view
-            {:style {:alignSelf       "flex-start"
-                     :backgroundColor "silver"}}
-            (component/logo)))
+
+      (r/view {:style {:alignSelf "flex-start" :padding "1%" :marginLeft "1%"}}
+        (component/logo))
+
+      (r/view {:style {:height 1 :backgroundColor (->color-near-white 0.08)}})
+
+
+
       (r/view {:style {:minHeight 500 :flexDirection "row"}}
-        (r/view {:style {:flex 2.5
-                         :maxWidth 400
-                         :backgroundColor "black" :padding "2%" :justifyContent "flex-start"}}
+
+        ;left side
+        (r/view {:style {:flex     2.5
+                         :maxWidth 400 :padding "2%" :justifyContent "flex-start"}}
           (r/text {:style {:marginBottom "8%"
                            :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}} "Live Datasets")
           (r/view {}
@@ -74,27 +78,26 @@
               (r/text {:style {:marginLeft "5%" :fontFamily "Inter-Regular" :fontSize 12 :color "darkgray"}}
                 "242,761,759 items"
                 (live)))
-            (r/touchable-opacity {:style {:marginLeft "5%" :marginBottom "5%"}}
-              (r/text {:style {:fontFamily "Inter-SemiBold" :color color-near-white :fontSize 15 :marginBottom "auto"}}
-                (str-arrow> "All mentions of the word \"Clojure\" by specific user")))
+            (r/touchable-opacity {:style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0.12)}}
+              (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
+                (str-arrow> "All mentions of \"Clojure\" by specific user")))
 
-            (r/touchable-opacity {:style {:marginLeft "5%" :marginBottom "5%"}}
-              (r/text {:style {:fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
-                (str-arrow> "All HackerNews users since launch"))))
-
-          )
-        (r/view {:style {:width 1 :backgroundColor (->color-near-white 0.05)}})
-        (r/view {:style {:flex 6 :backgroundColor "black" :padding "2%" :justifyContent "flex-start"}}
-          (r/text {:style {:marginBottom "4%"
-                           :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}} "Query")
+            (r/touchable-opacity {:style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0)}}
+              (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
+                (str-arrow> "All HackerNews users since launch")))))
+        ;border
+        (r/view {:style {:width 1 :backgroundColor (->color-near-white 0.08)}})
+        ;right side
+        (r/view {:style {:flex 6 :backgroundColor color-black :padding "2%" :justifyContent "flex-start"}}
+          (r/text {:style {:marginBottom "4%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}} "Query")
           (r/text {:style {:color color-near-white :fontFamily "monospace" :marginBottom "5%"}}
             "'[:find ?txt\n  :where\n  [?e :hn.item/by ?user]\n  [?e :hn.item/text ?txt]\n  [(clojure.string/includes? ?user \"raspasov\")]\n  [(clojure.string/includes? ?txt \"Clojure\")]]")
           (r/text {:style {:marginBottom "3%"
-                           :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}} "Live Results")
+                           :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}}
+            (live 2.1)
+            "Results")
           (r/text {:style {:color color-gray :fontFamily "monospace"}}
-            "#{...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...}")
-          )
-        )
+            "#{...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...}")))
 
       )))
 ;; Creates a renderable React element from the root component.
