@@ -64,8 +64,7 @@
       (r/view {:style {:minHeight 500 :flexDirection "row"}}
 
         ;left side
-        (r/view {:style {:flex     2.5
-                         :maxWidth 400 :padding "2%" :justifyContent "flex-start"}}
+        (r/view {:style {:flex     2.5 :backgroundColor color-near-black :maxWidth 400 :padding "2%" :justifyContent "flex-start"}}
           (r/text {:style {:marginBottom "8%"
                            :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}} "Live Datasets")
           (r/view {}
@@ -88,16 +87,16 @@
         ;border
         (r/view {:style {:width 1 :backgroundColor (->color-near-white 0.08)}})
         ;right side
-        (r/view {:style {:flex 6 :backgroundColor color-black :padding "2%" :justifyContent "flex-start"}}
+        (r/view {:style {:flex 6 :backgroundColor color-near-black :padding "2%" :justifyContent "flex-start"}}
           (r/text {:style {:marginBottom "4%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}} "Query")
           (r/text {:style {:color color-near-white :fontFamily "monospace" :marginBottom "5%"}}
             "'[:find ?txt\n  :where\n  [?e :hn.item/by ?user]\n  [?e :hn.item/text ?txt]\n  [(clojure.string/includes? ?user \"raspasov\")]\n  [(clojure.string/includes? ?txt \"Clojure\")]]")
           (r/text {:style {:marginBottom "3%"
                            :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}}
-            (live 2.1)
-            "Results")
+            "Live Results")
           (r/text {:style {:color color-gray :fontFamily "monospace"}}
             "#{...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...}")))
+      (r/view {:style {:height 1 :backgroundColor (->color-near-white 0.08)}})
 
       )))
 ;; Creates a renderable React element from the root component.
