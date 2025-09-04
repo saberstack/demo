@@ -44,16 +44,39 @@
               :fontSize         (* size 9) :color color-near-white :fontFamily "Inter-Bold" :backgroundColor "green" :padding (* size 3) :borderRadius (* size 4)}}
      "LIVE")))
 
-(rc/defnrc navigation-component [{:keys [queries] :as _props}]
+(rc/defnrc navigation-component
+  [{:keys [queries current-query] :as _props}]
   (let []
     (into []
       (map-indexed
-        (fn [idx {query-doc :doc}]
-          (r/touchable-opacity {:key idx :style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0)}}
+        (fn [idx [{a-name :name query-doc :doc} -current-query]]
+          (timbre/info "-current-query" -current-query)
+          (r/touchable-opacity
+            {:onPress (fn [_]
+                        (state/set-current-query! a-name)
+                        (state/get-query-result! a-name))
+             :key     idx :style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%"
+                                  :backgroundColor (->color-near-white (if (= a-name -current-query) 0.12 0))}}
             (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
               (str-arrow> query-doc)))))
-      queries)))
+      (sequence
+        (map (fn [x y] [x y]))
+        queries
+        (repeat current-query)))))
 (def navigation (rc/e navigation-component))
+
+(rc/defnrc live-query-result-component
+  [{:keys [query-result query-name] :as _props}]
+  (let [_ (rc/use-effect-once (fn []
+                                (state/get-query-result! 'get-all-clojure-mentions-by-raspasov)
+                                (fn cleanup [])))])
+  (r/view
+    (r/text {:style {:marginBottom "3%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}}
+      "Live Results")
+    (r/text {:style {:color color-gray :fontFamily "monospace"}}
+      query-result)))
+(def live-query-result (rc/e live-query-result-component))
+
 
 ;; The primary UI of the application.
 (rc/defnrc root-component [{:keys [] :as _props}]
@@ -61,7 +84,7 @@
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _ (reset! state/*root-refresh-hook root-refresh-hook)
         [fonts-loaded fonts-error] (useFonts (font/inter))
-        {:keys [queries] :as app-state} @state/*app-state]
+        {:keys [queries query-result query-name] :as app-state} @state/*app-state]
     (r/scroll-view
       {:style                 {:flex 1 :backgroundColor color-near-black}
        :contentContainerStyle {}}
@@ -91,14 +114,7 @@
               (r/text {:style {:marginLeft "5%" :fontFamily "Inter-Regular" :fontSize 12 :color "darkgray"}}
                 "242,761,759 items"
                 (live)))
-            (navigation {:queries queries})
-            #_(r/touchable-opacity {:style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0.12)}}
-              (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
-                (str-arrow> "All mentions of \"Clojure\" by specific user")))
-
-            #_(r/touchable-opacity {:style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0)}}
-              (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
-                (str-arrow> "All HackerNews users since launch")))))
+            (navigation {:queries queries :current-query query-name})))
         ;border
         (r/view {:style {:width 1 :backgroundColor (->color-near-white 0.08)}})
         ;right side
@@ -106,11 +122,7 @@
           (r/text {:style {:marginBottom "4%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}} "Query")
           (r/text {:style {:color color-near-white :fontFamily "monospace" :marginBottom "5%"}}
             "'[:find ?txt\n  :where\n  [?e :hn.item/by ?user]\n  [?e :hn.item/text ?txt]\n  [(clojure.string/includes? ?user \"raspasov\")]\n  [(clojure.string/includes? ?txt \"Clojure\")]]")
-          (r/text {:style {:marginBottom "3%"
-                           :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}}
-            "Live Results")
-          (r/text {:style {:color color-gray :fontFamily "monospace"}}
-            "#{...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...\n  ...}")))
+          (live-query-result {:query-result query-result})))
       (r/view {:style {:height 1 :backgroundColor (->color-near-white 0.08)}})
 
       )))

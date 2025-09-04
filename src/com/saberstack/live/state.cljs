@@ -14,6 +14,8 @@
 (defonce *bootloader-state (atom {:render :index}))
 (defonce *app-state
   (atom {:queries      []
+         :query-result (str #{})
+         :query-name   nil
          :company-name "Saberstack"
          :one-liner    "Rebuilding databases to answer the hardest questions in milliseconds.\nNo Snowflake required."}))
 
@@ -49,3 +51,17 @@
         (timbre/info "resp::" resp)
         (swap! *app-state assoc :queries resp))
       :done)))
+
+(defn get-query-result! [a-name]
+  (when a-name
+    (a/go
+      (let [resp (a/<! (fetch/fetch-transit (path "/query/" (str a-name) "/result")))]
+        (timbre/info "resp::" resp)
+        (swap! *app-state assoc :query-result (with-out-str (cljs.pprint/pprint resp)))
+        :done))))
+
+(defn set-current-query! [a-name]
+  (swap! *app-state assoc :query-name a-name))
+
+(comment
+  (get-query-result! 'get-all-clojure-mentions-by-raspasov))
