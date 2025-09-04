@@ -14,7 +14,7 @@
 (defonce *bootloader-state (atom {:render :index}))
 (defonce *app-state
   (atom {:queries      []
-         :query-result (str #{})
+         :query-result (str "Select a query to display results")
          :query-name   nil
          :company-name "Saberstack"
          :one-liner    "Rebuilding databases to answer the hardest questions in milliseconds.\nNo Snowflake required."}))

@@ -68,9 +68,9 @@
 (rc/defnrc live-query-result-component
   [{:keys [query-result query-name] :as _props}]
   (let [_ (rc/use-effect-once (fn []
-                                (state/get-query-result! 'get-all-clojure-mentions-by-raspasov)
+                                (state/get-query-result! query-name)
                                 (fn cleanup [])))])
-  (r/view
+  (r/view {}
     (r/text {:style {:marginBottom "3%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}}
       "Live Results")
     (r/text {:style {:color color-gray :fontFamily "monospace"}}
@@ -119,8 +119,8 @@
         (r/view {:style {:width 1 :backgroundColor (->color-near-white 0.08)}})
         ;right side
         (r/view {:style {:flex 6 :backgroundColor color-near-black :padding "2%" :justifyContent "flex-start"}}
-          (r/text {:style {:marginBottom "4%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}} "Query")
-          (r/text {:style {:color color-near-white :fontFamily "monospace" :marginBottom "5%"}}
+          #_(r/text {:style {:marginBottom "4%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}} "Query")
+          #_(r/text {:style {:color color-near-white :fontFamily "monospace" :marginBottom "5%"}}
             "'[:find ?txt\n  :where\n  [?e :hn.item/by ?user]\n  [?e :hn.item/text ?txt]\n  [(clojure.string/includes? ?user \"raspasov\")]\n  [(clojure.string/includes? ?txt \"Clojure\")]]")
           (live-query-result {:query-result query-result})))
       (r/view {:style {:height 1 :backgroundColor (->color-near-white 0.08)}})
