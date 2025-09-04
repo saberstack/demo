@@ -44,13 +44,24 @@
               :fontSize         (* size 9) :color color-near-white :fontFamily "Inter-Bold" :backgroundColor "green" :padding (* size 3) :borderRadius (* size 4)}}
      "LIVE")))
 
+(rc/defnrc navigation-component [{:keys [queries] :as _props}]
+  (let []
+    (into []
+      (map-indexed
+        (fn [idx {query-doc :doc}]
+          (r/touchable-opacity {:key idx :style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0)}}
+            (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
+              (str-arrow> query-doc)))))
+      queries)))
+(def navigation (rc/e navigation-component))
+
 ;; The primary UI of the application.
 (rc/defnrc root-component [{:keys [] :as _props}]
   ;; A refresh hook to allow external processes to trigger a re-render
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
-        _         (reset! state/*root-refresh-hook root-refresh-hook)
+        _ (reset! state/*root-refresh-hook root-refresh-hook)
         [fonts-loaded fonts-error] (useFonts (font/inter))
-        app-state @state/*app-state]
+        {:keys [queries] :as app-state} @state/*app-state]
     (r/scroll-view
       {:style                 {:flex 1 :backgroundColor color-near-black}
        :contentContainerStyle {}}
@@ -67,7 +78,7 @@
       (r/view {:style {:minHeight 500 :flexDirection "row"}}
 
         ;left side
-        (r/view {:style {:flex     2.5 :backgroundColor color-near-black :maxWidth 400 :padding "2%" :justifyContent "flex-start"}}
+        (r/view {:style {:flex 2.5 :backgroundColor color-near-black :maxWidth 400 :padding "2%" :justifyContent "flex-start"}}
           (r/text {:style {:marginBottom "8%"
                            :fontFamily   "Inter-SemiBold" :color color-gray :fontSize 23}} "Live Datasets")
           (r/view {}
@@ -80,11 +91,12 @@
               (r/text {:style {:marginLeft "5%" :fontFamily "Inter-Regular" :fontSize 12 :color "darkgray"}}
                 "242,761,759 items"
                 (live)))
-            (r/touchable-opacity {:style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0.12)}}
+            (navigation {:queries queries})
+            #_(r/touchable-opacity {:style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0.12)}}
               (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
                 (str-arrow> "All mentions of \"Clojure\" by specific user")))
 
-            (r/touchable-opacity {:style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0)}}
+            #_(r/touchable-opacity {:style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%" :backgroundColor (->color-near-white 0)}}
               (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
                 (str-arrow> "All HackerNews users since launch")))))
         ;border

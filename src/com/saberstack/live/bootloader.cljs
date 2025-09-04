@@ -6,7 +6,10 @@
 
 ;; A wrapper function that renders the main application view.
 (defn render-setup-index [& {:keys []}]
-  (index/root {}))
+  (let [_ (rc/use-effect-once (fn []
+                                (state/get-queries!)
+                                (fn cleanup [])))]
+    (index/root {})))
 
 ;; This component acts as a bootloader or a simple router.
 ;; It consults the shared application state (`*bootloader-state`)

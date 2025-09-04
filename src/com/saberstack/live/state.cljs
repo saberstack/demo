@@ -1,15 +1,10 @@
 (ns com.saberstack.live.state
   (:require
+   [clojure.core.async :as a]
    [ss.cljs.fetch :as fetch]
-   [ss.cljs.promises]))
+   [ss.cljs.promises]
+   [taoensso.timbre :as timbre]))
 
-(def domain "https://demo.saberstack.com")
-
-(defn path [& params]
-  (apply str domain params))
-
-(defn get-queries []
-  (fetch/fetch-transit (path "/queries")))
 
 ;; Manages the application's top-level state.
 ;; Using `defonce` and atoms ensures that state is preserved
@@ -18,7 +13,8 @@
 (defonce *root-refresh-hook (atom nil))
 (defonce *bootloader-state (atom {:render :index}))
 (defonce *app-state
-  (atom {:company-name "Saberstack"
+  (atom {:queries      []
+         :company-name "Saberstack"
          :one-liner    "Rebuilding databases to answer the hardest questions in milliseconds.\nNo Snowflake required."}))
 
 ;; A higher-order function that creates a watch handler for an atom.
@@ -38,3 +34,18 @@
   ;Adding watches to bootloader and root refresh hooks
   (add-watch *bootloader-state :watch-1 (watch-refresh-hook *bootloader-refresh-hook))
   (add-watch *app-state :watch-1 (watch-refresh-hook *root-refresh-hook)))
+
+
+(def domain "https://demo.saberstack.com")
+
+(defn path [& params]
+  (apply str domain params))
+
+(defn get-queries! []
+  (a/go
+    (let [resp (a/<!
+                 (fetch/fetch-transit (path "/queries")))]
+      (when (vector? resp)
+        (timbre/info "resp::" resp)
+        (swap! *app-state assoc :queries resp))
+      :done)))
