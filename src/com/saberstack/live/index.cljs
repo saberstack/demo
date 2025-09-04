@@ -7,7 +7,10 @@
             [com.saberstack.live.font.core :as font]
             [com.saberstack.live.component :as component]
             [ss.react.core :as rc]
+            [ss.cljs.promises]
             [taoensso.timbre :as timbre]))
+
+(ss.cljs.promises/extend-promises-as-pair-channels!)
 
 (def color-near-black "#08090a")
 (def color-near-white "#f7f8f8")

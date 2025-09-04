@@ -1,4 +1,15 @@
-(ns com.saberstack.live.state)
+(ns com.saberstack.live.state
+  (:require
+   [ss.cljs.fetch :as fetch]
+   [ss.cljs.promises]))
+
+(def domain "https://demo.saberstack.com")
+
+(defn path [& params]
+  (apply str domain params))
+
+(defn get-queries []
+  (fetch/fetch-transit (path "/queries")))
 
 ;; Manages the application's top-level state.
 ;; Using `defonce` and atoms ensures that state is preserved
@@ -8,7 +19,7 @@
 (defonce *bootloader-state (atom {:render :index}))
 (defonce *app-state
   (atom {:company-name "Saberstack"
-         :one-liner "Rebuilding databases to answer the hardest questions in milliseconds.\nNo Snowflake required."}))
+         :one-liner    "Rebuilding databases to answer the hardest questions in milliseconds.\nNo Snowflake required."}))
 
 ;; A higher-order function that creates a watch handler for an atom.
 ;; This handler, when attached to a state atom, triggers a UI refresh
