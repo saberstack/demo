@@ -1,5 +1,7 @@
 (ns com.saberstack.live.index
   (:require [cljs-bean.core :as b]
+            [clojure.core.async :as a]
+            [ss.loop :as ss.loop]
             [ss.expo.core :as expo]
             [ss.react-native.core :as r]
             [com.saberstack.live.state :as state]
@@ -55,7 +57,7 @@
             {:onPress (fn [_]
                         (state/set-current-query! a-name)
                         (state/get-query-result! a-name))
-             :key     idx :style {:borderRadius 6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%"
+             :key     idx :style {:borderRadius    6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%"
                                   :backgroundColor (->color-near-white (if (= a-name -current-query) 0.12 0))}}
             (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
               (str-arrow> query-doc)))))
@@ -65,11 +67,25 @@
         (repeat current-query)))))
 (def navigation (rc/e navigation-component))
 
+(defn live-result-refresh
+  [query-name]
+  (ss.loop/go-loop
+    ^{:id :live-result-refresh}
+    []
+    (state/get-query-result! query-name)
+    (a/<! (a/timeout 3000))
+    (timbre/info "refresh ... " query-name)
+    (recur)))
+
 (rc/defnrc live-query-result-component
   [{:keys [query-result query-name] :as _props}]
-  (let [_ (rc/use-effect-once (fn []
-                                (state/get-query-result! query-name)
-                                (fn cleanup [])))])
+  (let [_ (timbre/info "query-name" query-name)
+        _ (rc/use-effect
+            (fn []
+              (live-result-refresh query-name)
+              (fn cleanup []
+                (ss.loop/stop :live-result-refresh)))
+            #js [query-name])])
   (r/view {}
     (r/text {:style {:marginBottom "3%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}}
       "Live Results")
@@ -121,8 +137,8 @@
         (r/view {:style {:flex 6 :backgroundColor color-near-black :padding "2%" :justifyContent "flex-start"}}
           #_(r/text {:style {:marginBottom "4%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}} "Query")
           #_(r/text {:style {:color color-near-white :fontFamily "monospace" :marginBottom "5%"}}
-            "'[:find ?txt\n  :where\n  [?e :hn.item/by ?user]\n  [?e :hn.item/text ?txt]\n  [(clojure.string/includes? ?user \"raspasov\")]\n  [(clojure.string/includes? ?txt \"Clojure\")]]")
-          (live-query-result {:query-result query-result})))
+              "'[:find ?txt\n  :where\n  [?e :hn.item/by ?user]\n  [?e :hn.item/text ?txt]\n  [(clojure.string/includes? ?user \"raspasov\")]\n  [(clojure.string/includes? ?txt \"Clojure\")]]")
+          (live-query-result {:query-result query-result :query-name query-name})))
       (r/view {:style {:height 1 :backgroundColor (->color-near-white 0.08)}})
 
       )))

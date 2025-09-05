@@ -52,12 +52,25 @@
         (swap! *app-state assoc :queries resp))
       :done)))
 
+(defn truncate-string [s limit]
+  (if (< limit (count s))
+    (str (subs s 0 limit) "...")
+    s))
+
 (defn get-query-result! [a-name]
   (when a-name
     (a/go
       (let [resp (a/<! (fetch/fetch-transit (path "/query/" (str a-name) "/result")))]
         (timbre/info "resp::" resp)
-        (swap! *app-state assoc :query-result (with-out-str (cljs.pprint/pprint resp)))
+        (swap! *app-state assoc :query-result
+          (str "Result count: "
+            (count resp) "\n\n"
+            (with-out-str
+              (cljs.pprint/pprint
+                (into #{}
+                  (map (fn [[txt]]
+                         [(truncate-string txt 120)])
+                    resp))))))
         :done))))
 
 (defn set-current-query! [a-name]
