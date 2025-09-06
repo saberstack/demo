@@ -66,6 +66,30 @@
         (repeat current-query)))))
 (def navigation (rc/e navigation-component))
 
+(defn live-item-count-refresh
+  []
+  (ss.loop/go-loop
+    ^{:id :live-item-count-refresh}
+    []
+    ;(timbre/info query-name "::: going to refresh ")
+    (state/get-items-count!)
+    ;(timbre/info query-name "::: refreshed")
+    (a/<! (a/timeout 3000))
+    (recur)))
+
+(rc/defnrc items-cnt-component
+  [{:keys [items-count] :as _props}]
+  (let [_ (rc/use-effect
+            (fn []
+              (live-item-count-refresh)
+              (fn cleanup [] (ss.loop/stop :live-item-count-refresh)))
+            #js [items-count])]
+    (r/text {:style {:marginLeft "5%" :fontFamily "Inter-Regular" :fontSize 12 :color "darkgray"}}
+      (str items-count " items")
+      (live))))
+
+(def items-cnt (rc/e items-cnt-component))
+
 (defn live-result-refresh
   [query-name]
   (ss.loop/go-loop
@@ -75,7 +99,6 @@
     (state/get-query-result! query-name)
     ;(timbre/info query-name "::: refreshed")
     (a/<! (a/timeout 3000))
-
     (recur)))
 
 (rc/defnrc live-query-result-component
@@ -84,8 +107,7 @@
         _ (rc/use-effect
             (fn []
               (live-result-refresh query-name)
-              (fn cleanup []
-                (ss.loop/stop :live-result-refresh)))
+              (fn cleanup [] (ss.loop/stop :live-result-refresh)))
             #js [query-name])])
   (r/view {}
     (r/text {:style {:marginBottom "3%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}}
@@ -101,13 +123,12 @@
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _ (reset! state/*root-refresh-hook root-refresh-hook)
         [fonts-loaded fonts-error] (useFonts (font/inter))
-        {:keys [queries query-result query-name] :as app-state} @state/*app-state]
+        {:keys [queries query-result query-name items-count] :as app-state} @state/*app-state
+        _ (println "items-count:::" items-count)]
     (r/scroll-view
       {:style                 {:flex 1 :backgroundColor color-near-black}
        :contentContainerStyle {}}
       ;Header
-
-
       (r/view {:style {:alignSelf "flex-start" :padding "1%" :marginLeft "1%"}}
         (component/logo))
 
@@ -125,12 +146,8 @@
             (r/view {:style {:marginBottom "6%"}}
               (r/text
                 {:style {:fontFamily "Inter-SemiBold" :color color-near-white :fontSize 23 :marginBottom "auto"}}
-                (str-arrow-down 15 "HackerNews")
-                )
-
-              (r/text {:style {:marginLeft "5%" :fontFamily "Inter-Regular" :fontSize 12 :color "darkgray"}}
-                "242,761,759 items"
-                (live)))
+                (str-arrow-down 15 "HackerNews"))
+              (items-cnt {:items-count items-count}))
             (navigation {:queries queries :current-query query-name})))
         ;border
         (r/view {:style {:width 1 :backgroundColor (->color-near-white 0.08)}})

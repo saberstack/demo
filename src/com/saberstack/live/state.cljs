@@ -4,6 +4,7 @@
    [ss.cljs.fetch :as fetch]
    [ss.cljs.promises]
    [goog.string :as gstr]
+   [goog.i18n.NumberFormat]
    [cljs.pprint :as pprint]
    [taoensso.timbre :as timbre]))
 
@@ -54,6 +55,19 @@
         (swap! *app-state assoc :queries resp))
       :done)))
 
+(defn format-number-with-commas [n]
+  (.format
+    (goog.i18n.NumberFormat. "#,##0.##")
+    n))
+
+(defn get-items-count! []
+  (a/go
+    (let [data (a/<! (fetch/fetch-transit (path "/items/count")))]
+      (when-let [cnt (:items-count data)]
+        (timbre/info "resp::" data)
+        (swap! *app-state assoc :items-count (format-number-with-commas cnt)))
+      :done)))
+
 (defn truncate-string [s limit]
   (if (< limit (count s))
     (str (subs s 0 limit) "...")
@@ -72,9 +86,10 @@
             coll))))))
 
 (defn get-query-result! [a-name]
+  (timbre/info "a-name" a-name)
   (when a-name
     (a/go
-      (let [coll (a/<! (fetch/fetch-transit (path "/query/" (str a-name) "/result")))]
+      (let [coll (a/<! (fetch/fetch-transit (path "/query/" (gstr/urlEncode a-name) "/result")))]
         (swap! *app-state assoc :query-result (format-query-result coll))
         :done))))
 
