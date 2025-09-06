@@ -3,6 +3,8 @@
    [clojure.core.async :as a]
    [ss.cljs.fetch :as fetch]
    [ss.cljs.promises]
+   [goog.string :as gstr]
+   [cljs.pprint :as pprint]
    [taoensso.timbre :as timbre]))
 
 
@@ -66,10 +68,11 @@
           (str "Result count: "
             (count resp) "\n\n"
             (with-out-str
-              (cljs.pprint/pprint
+              (pprint/pprint
                 (into #{}
                   (map (fn [[txt]]
-                         [(truncate-string txt 120)])
+                         [(gstr/unescapeEntities
+                            (truncate-string txt 120))])
                     resp))))))
         :done))))
 

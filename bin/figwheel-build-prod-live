@@ -1,0 +1,10 @@
+#!/bin/zsh
+
+PROD_INDEX_FILE=index.js
+clj -M -m figwheel.main -O advanced -bo com.saberstack.live-prod
+cat target_prod/main.js > ${PROD_INDEX_FILE}
+bin/index-js-fix-live.clj
+npx expo export --platform web
+mkdir -p dist/assets
+cp saberstack-logo-t*png dist/assets/
+(cd dist && zip -r -X "../dist.zip" .)
