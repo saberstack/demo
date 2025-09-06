@@ -1,7 +1,7 @@
 (ns com.saberstack.live.index
   (:require [cljs-bean.core :as b]
             [clojure.core.async :as a]
-            [ss.loop :as ss.loop]
+            [org.saberstack.clojure.core.async.loop :as ss.loop]
             [ss.expo.core :as expo]
             [ss.react-native.core :as r]
             [com.saberstack.live.state :as state]
@@ -52,7 +52,6 @@
     (into []
       (map-indexed
         (fn [idx [{a-name :name query-doc :doc} -current-query]]
-          (timbre/info "-current-query" -current-query)
           (r/touchable-opacity
             {:onPress (fn [_]
                         (state/set-current-query! a-name)
@@ -72,14 +71,16 @@
   (ss.loop/go-loop
     ^{:id :live-result-refresh}
     []
+    ;(timbre/info query-name "::: going to refresh ")
     (state/get-query-result! query-name)
+    ;(timbre/info query-name "::: refreshed")
     (a/<! (a/timeout 3000))
-    (timbre/info "refresh ... " query-name)
+
     (recur)))
 
 (rc/defnrc live-query-result-component
   [{:keys [query-result query-name] :as _props}]
-  (let [_ (timbre/info "query-name" query-name)
+  (let [_ (timbre/info query-name "::: RENDER live-query-result-component")
         _ (rc/use-effect
             (fn []
               (live-result-refresh query-name)

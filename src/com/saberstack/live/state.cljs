@@ -59,21 +59,23 @@
     (str (subs s 0 limit) "...")
     s))
 
+(defn format-query-result
+  [coll]
+  (str "Result count: "
+    (count coll) "\n\n"
+    (with-out-str
+      (pprint/pprint
+        (into #{}
+          (map (fn [[txt]]
+                 [(gstr/unescapeEntities
+                    (truncate-string txt 120))])
+            coll))))))
+
 (defn get-query-result! [a-name]
   (when a-name
     (a/go
-      (let [resp (a/<! (fetch/fetch-transit (path "/query/" (str a-name) "/result")))]
-        (timbre/info "resp::" resp)
-        (swap! *app-state assoc :query-result
-          (str "Result count: "
-            (count resp) "\n\n"
-            (with-out-str
-              (pprint/pprint
-                (into #{}
-                  (map (fn [[txt]]
-                         [(gstr/unescapeEntities
-                            (truncate-string txt 120))])
-                    resp))))))
+      (let [coll (a/<! (fetch/fetch-transit (path "/query/" (str a-name) "/result")))]
+        (swap! *app-state assoc :query-result (format-query-result coll))
         :done))))
 
 (defn set-current-query! [a-name]
