@@ -123,21 +123,15 @@
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _ (reset! state/*root-refresh-hook root-refresh-hook)
         [fonts-loaded fonts-error] (useFonts (font/inter))
-        {:keys [queries query-result query-name items-count] :as app-state} @state/*app-state
-        _ (println "items-count:::" items-count)]
+        {:keys [queries query-result query-name items-count] :as app-state} @state/*app-state]
     (r/scroll-view
       {:style                 {:flex 1 :backgroundColor color-near-black}
        :contentContainerStyle {}}
       ;Header
       (r/view {:style {:alignSelf "flex-start" :padding "1%" :marginLeft "1%"}}
         (component/logo))
-
       (r/view {:style {:height 1 :backgroundColor (->color-near-white 0.08)}})
-
-
-
       (r/view {:style {:minHeight 500 :flexDirection "row"}}
-
         ;left side
         (r/view {:style {:flex 2.5 :backgroundColor color-near-black :maxWidth 400 :padding "2%" :justifyContent "flex-start"}}
           (r/text {:style {:marginBottom "8%"

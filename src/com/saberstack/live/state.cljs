@@ -51,7 +51,6 @@
     (let [resp (a/<!
                  (fetch/fetch-transit (path "/queries")))]
       (when (vector? resp)
-        (timbre/info "resp::" resp)
         (swap! *app-state assoc :queries resp))
       :done)))
 
@@ -64,7 +63,6 @@
   (a/go
     (let [data (a/<! (fetch/fetch-transit (path "/items/count")))]
       (when-let [cnt (:items-count data)]
-        (timbre/info "resp::" data)
         (swap! *app-state assoc :items-count (format-number-with-commas cnt)))
       :done)))
 
