@@ -71,6 +71,14 @@
     (str (subs s 0 limit) "...")
     s))
 
+(defn format-query
+  [coll]
+  (str
+    (with-out-str
+      (pprint/pprint
+        coll))
+    "\n\n"))
+
 (defn format-query-result
   [coll]
   (str "Result count: "
@@ -91,8 +99,8 @@
         (swap! *app-state assoc :query-result (format-query-result coll))
         :done))))
 
-(defn set-current-query! [a-name]
-  (swap! *app-state assoc :query-name a-name))
+(defn set-current-query! [m]
+  (swap! *app-state merge m))
 
 (comment
   (get-query-result! 'get-all-clojure-mentions-by-raspasov))

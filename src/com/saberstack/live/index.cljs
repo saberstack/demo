@@ -48,22 +48,21 @@
 
 (rc/defnrc navigation-component
   [{:keys [queries current-query] :as _props}]
-  (let []
-    (into []
-      (map-indexed
-        (fn [idx [{a-name :name query-doc :doc} -current-query]]
-          (r/touchable-opacity
-            {:onPress (fn [_]
-                        (state/set-current-query! a-name)
-                        (state/get-query-result! a-name))
-             :key     idx :style {:borderRadius    6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%"
-                                  :backgroundColor (->color-near-white (if (= a-name -current-query) 0.12 0))}}
-            (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
-              (str-arrow> query-doc)))))
-      (sequence
-        (map (fn [x y] [x y]))
-        queries
-        (repeat current-query)))))
+  (into []
+    (map-indexed
+      (fn [idx [{query :query a-name :name query-doc :doc} -current-query]]
+        (r/touchable-opacity
+          {:onPress (fn [_]
+                      (state/set-current-query! {:query-name a-name :query query})
+                      (state/get-query-result! a-name))
+           :key     idx :style {:borderRadius    6 :minHeight 60 :paddingLeft "5%" :paddingVertical "2.5%"
+                                :backgroundColor (->color-near-white (if (= a-name -current-query) 0.12 0))}}
+          (r/text {:style {:marginVertical "auto" :fontFamily "Inter-Regular" :color color-near-white :fontSize 15 :marginBottom "auto"}}
+            (str-arrow> query-doc)))))
+    (sequence
+      (map (fn [x y] [x y]))
+      queries
+      (repeat current-query))))
 (def navigation (rc/e navigation-component))
 
 (defn live-item-count-refresh
@@ -102,7 +101,7 @@
     (recur)))
 
 (rc/defnrc live-query-result-component
-  [{:keys [query-result query-name] :as _props}]
+  [{:keys [query query-result query-name] :as _props}]
   (let [_ (timbre/info query-name "::: RENDER live-query-result-component")
         _ (rc/use-effect
             (fn []
@@ -110,6 +109,11 @@
               (fn cleanup [] (ss.loop/stop :live-result-refresh)))
             #js [query-name])])
   (r/view {}
+    (when query
+      (r/text {:style {:marginBottom "3%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}}
+        "Query"))
+    (r/text {:style {:color color-gray :fontFamily "monospace"}}
+      (str (when query (state/format-query query))))
     (r/text {:style {:marginBottom "3%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}}
       "Live Results")
     (r/text {:style {:color color-gray :fontFamily "monospace"}}
@@ -123,7 +127,7 @@
   (let [[_ root-refresh-hook] (rc/use-state (random-uuid))
         _ (reset! state/*root-refresh-hook root-refresh-hook)
         [fonts-loaded fonts-error] (useFonts (font/inter))
-        {:keys [queries query-result query-name items-count] :as app-state} @state/*app-state]
+        {:keys [queries query query-result query-name items-count] :as app-state} @state/*app-state]
     (r/scroll-view
       {:style                 {:flex 1 :backgroundColor color-near-black}
        :contentContainerStyle {}}
@@ -150,7 +154,7 @@
           #_(r/text {:style {:marginBottom "4%" :fontFamily "Inter-SemiBold" :color color-gray :fontSize 23}} "Query")
           #_(r/text {:style {:color color-near-white :fontFamily "monospace" :marginBottom "5%"}}
               "'[:find ?txt\n  :where\n  [?e :hn.item/by ?user]\n  [?e :hn.item/text ?txt]\n  [(clojure.string/includes? ?user \"raspasov\")]\n  [(clojure.string/includes? ?txt \"Clojure\")]]")
-          (live-query-result {:query-result query-result :query-name query-name})))
+          (live-query-result {:query query :query-result query-result :query-name query-name})))
       (r/view {:style {:height 1 :backgroundColor (->color-near-white 0.08)}})
 
       )))
